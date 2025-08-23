@@ -1,12 +1,11 @@
 import { searchApi, queryHistoryApi, torrentApi } from "./api/search.js";
 import fs from "fs";
-import axios from "axios";
-import path from "path";
+import {downloadFile} from "./utils/index.js";
 
 const DOWNLOAD_DIR = "torrents";
 const DOWNLOAD_INTERVAL = 30 * 1000; // 30秒
 
-let pageNumber = 28;
+let pageNumber = 29;
 async function getList() {
   const res = await searchApi({
     pageNumber,
@@ -27,7 +26,6 @@ async function torrent(data) {
     const res = await torrentApi({
       id: data.id,
     });
-    console.log(22, res);
     return res.data;
   } catch (error) {
     console.error(`获取 ${data.name} 的种子链接失败:`, error.message);
@@ -59,10 +57,7 @@ const start = async () => {
     (item) => !historyData.historyMap[item.id]
   );
   console.log(`筛选完成，还剩数据 ${filteredData.length} 条`);
-  console.log("输出结果");
-  console.log(filteredData);
-
-  console.log("开始生成下载链接");
+  console.log("开始下载");
   loopDownload(filteredData);
   // The script will now end when loopDownload finishes.
 };
@@ -82,7 +77,6 @@ function loopDownload(filteredData) {
     const item = filteredData[index];
     console.log(`准备下载: ${item.name}`);
     const torrentUrl = await torrent(item);
-    console.log(11, torrentUrl);
     if (torrentUrl) {
       console.log(`下载链接为：${torrentUrl}`);
       await downloadFile(torrentUrl, DOWNLOAD_DIR);
@@ -102,41 +96,4 @@ function loopDownload(filteredData) {
   downloadNext();
 }
 
-// node 下载文件
-async function downloadFile(url, dir) {
-  try {
-    const response = await axios({
-      url,
-      method: "GET",
-      responseType: "stream",
-      // 请求头，让服务器知道我们接受的编码
-      headers: {
-        "Accept-Charset": "utf-8, gbk;q=0.9, *;q=0.8",
-      },
-    });
 
-    const contentDisposition = response.headers["content-disposition"];
-    const match = contentDisposition.match(/filename="(.+?)"/i);
-    // 先取出来
-    let filename = match[1];
-    filename = decodeURIComponent(escape(filename));
-
-    const destPath = path.join(dir, filename);
-
-    const writer = fs.createWriteStream(destPath);
-    response.data.pipe(writer);
-
-    return new Promise((resolve, reject) => {
-      writer.on("finish", () => {
-        console.log(`下载完成: ${destPath}`);
-        resolve();
-      });
-      writer.on("error", (err) => {
-        console.error(`写入文件失败: ${destPath}`, err);
-        reject(err);
-      });
-    });
-  } catch (error) {
-    console.error(`下载文件失败: ${url}`, error.message);
-  }
-}
