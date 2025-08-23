@@ -11,7 +11,14 @@ function formatBytes(bytes, decimals = 2) {
 const DOWNLOAD_DIR = "torrents";
 const DOWNLOAD_INTERVAL = 30 * 1000; // 30秒
 
-let pageNumber = 58;
+let pageNumber = 63;
+let gracefulExit = false;
+
+process.on("SIGINT", () => {
+  console.log("\n收到退出信号，将在当前页面下载完成后安全退出...");
+  gracefulExit = true;
+});
+
 async function getList() {
   const res = await searchApi({
     pageNumber,
@@ -63,6 +70,10 @@ const start = async () => {
   }
 
   while (true) {
+    if (gracefulExit) {
+      console.log("安全退出。");
+      break;
+    }
     console.log(`获取第${pageNumber}页列表数据`);
     const list = await getList();
     if (!list || !list.data || list.data.length === 0) {
@@ -93,6 +104,7 @@ const start = async () => {
         console.log("开始下载");
         await loopDownload(filteredData);
         console.log(`第 ${pageNumber} 页处理完毕，准备翻页`);
+        if (gracefulExit) break;
         await countdown(DOWNLOAD_INTERVAL / 1000);
       } else {
         console.log("本页没有需要下载的新数据。");
@@ -116,7 +128,6 @@ function loopDownload(filteredData) {
     let index = 0;
     const downloadNext = async () => {
       if (index >= filteredData.length) {
-        console.log("本页文件下载完成");
         resolve();
         return;
       }
@@ -133,7 +144,6 @@ function loopDownload(filteredData) {
         await countdown(DOWNLOAD_INTERVAL / 1000);
         await downloadNext();
       } else {
-        console.log("本页文件下载完成");
         resolve();
       }
     };
