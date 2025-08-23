@@ -27,7 +27,7 @@ async function torrent(data) {
     const res = await torrentApi({
       id: data.id,
     });
-    console.log(22,res)
+    console.log(22, res);
     return res.data;
   } catch (error) {
     console.error(`获取 ${data.name} 的种子链接失败:`, error.message);
@@ -85,11 +85,7 @@ function loopDownload(filteredData) {
     console.log(11, torrentUrl);
     if (torrentUrl) {
       console.log(`下载链接为：${torrentUrl}`);
-      // 清理文件名中的非法字符
-      const safeFilename =
-        item.name.replace(/[\/\\?%*:|"<>]/g, "-") + ".torrent";
-      const destPath = path.join(DOWNLOAD_DIR, safeFilename);
-      await downloadFile(torrentUrl, destPath);
+      await downloadFile(torrentUrl, DOWNLOAD_DIR);
     }
 
     index++;
@@ -106,25 +102,39 @@ function loopDownload(filteredData) {
   downloadNext();
 }
 
+import iconv from "iconv-lite";
+
 // node 下载文件
-async function downloadFile(url, dest) {
+async function downloadFile(url, dir) {
   try {
-    const writer = fs.createWriteStream(dest);
     const response = await axios({
       url,
       method: "GET",
       responseType: "stream",
+      // 请求头，让服务器知道我们接受的编码
+      headers: {
+        "Accept-Charset": "utf-8, gbk;q=0.9, *;q=0.8",
+      },
     });
 
+    const contentDisposition = response.headers["content-disposition"];
+    const match = contentDisposition.match(/filename="(.+?)"/i);
+    // 先取出来
+    let filename = match[1];
+    filename = decodeURIComponent(escape(filename));
+
+    const destPath = path.join(dir, filename);
+
+    const writer = fs.createWriteStream(destPath);
     response.data.pipe(writer);
 
     return new Promise((resolve, reject) => {
       writer.on("finish", () => {
-        console.log(`下载完成: ${dest}`);
+        console.log(`下载完成: ${destPath}`);
         resolve();
       });
       writer.on("error", (err) => {
-        console.error(`写入文件失败: ${dest}`, err);
+        console.error(`写入文件失败: ${destPath}`, err);
         reject(err);
       });
     });
