@@ -102,8 +102,6 @@ function loopDownload(filteredData) {
   downloadNext();
 }
 
-import iconv from "iconv-lite";
-
 // node 下载文件
 async function downloadFile(url, dir) {
   try {
