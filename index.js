@@ -82,20 +82,26 @@ function loopDownload(filteredData) {
     const item = filteredData[index];
     console.log(`准备下载: ${item.name}`);
     const torrentUrl = await torrent(item);
-    console.log(11,torrentUrl)
+    console.log(11, torrentUrl);
     if (torrentUrl) {
       console.log(`下载链接为：${torrentUrl}`);
       // 清理文件名中的非法字符
-      const safeFilename = item.name.replace(/[\/\\?%*:|"<>]/g, "-") + ".torrent";
+      const safeFilename =
+        item.name.replace(/[\/\\?%*:|"<>]/g, "-") + ".torrent";
       const destPath = path.join(DOWNLOAD_DIR, safeFilename);
       await downloadFile(torrentUrl, destPath);
     }
 
-    // 等待
-    console.log(`等待 ${DOWNLOAD_INTERVAL / 1000} 秒...`);
-    await new Promise((resolve) => setTimeout(resolve, DOWNLOAD_INTERVAL));
     index++;
-    await downloadNext();
+    if (index < filteredData.length) {
+      // 等待
+      console.log(`等待 ${DOWNLOAD_INTERVAL / 1000} 秒...`);
+      await new Promise((resolve) => setTimeout(resolve, DOWNLOAD_INTERVAL));
+      await downloadNext();
+    } else {
+      console.log("所有文件下载完成");
+      console.log("结束");
+    }
   };
   downloadNext();
 }
