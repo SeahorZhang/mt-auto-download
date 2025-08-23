@@ -1,6 +1,15 @@
 import { searchApi, queryHistoryApi, torrentApi } from "./api/search.js";
 import fs from "fs";
 import { downloadFile } from "./utils/index.js";
+import pc from "picocolors";
+
+const logger = {
+  info: (msg) => console.log(pc.blue(msg)),
+  success: (msg) => console.log(pc.green(msg)),
+  warn: (msg) => console.log(pc.yellow(msg)),
+  error: (msg) => console.error(pc.red(msg)),
+  log: (msg) => console.log(msg),
+};
 
 function formatBytes(bytes, decimals = 2) {
   if (bytes === 0) return "0 MB";
@@ -11,11 +20,11 @@ function formatBytes(bytes, decimals = 2) {
 const DOWNLOAD_DIR = "torrents";
 const DOWNLOAD_INTERVAL = 30 * 1000; // 30秒
 
-let pageNumber = 63;
+let pageNumber = 75;
 let gracefulExit = false;
 
 process.on("SIGINT", () => {
-  console.log("\n收到退出信号，将在当前页面下载完成后安全退出...");
+  logger.warn("\n收到退出信号，将在当前页面下载完成后安全退出...");
   gracefulExit = true;
 });
 
@@ -41,7 +50,7 @@ async function torrent(data) {
     });
     return res.data;
   } catch (error) {
-    console.error(`获取 ${data.name} 的种子链接失败:`, error.message);
+    logger.error(`❌ 获取 ${data.name} 的种子链接失败: ${error.message}`);
     return null;
   }
 }
@@ -50,7 +59,16 @@ const countdown = (seconds) => {
   return new Promise((resolve) => {
     let remaining = seconds;
     const intervalId = setInterval(() => {
-      process.stdout.write(`等待 ${remaining} 秒... \r`);
+      if (gracefulExit) {
+        process.stdout.write(
+          pc.yellow("收到退出信号，等待当前任务完成... ") +
+            pc.gray(`⏳ ${remaining} 秒`) +
+            "   \r"
+        );
+      } else {
+        process.stdout.write(pc.gray(`⏳ 等待 ${remaining} 秒... \r`));
+      }
+
       remaining--;
       if (remaining < 0) {
         clearInterval(intervalId);
@@ -62,56 +80,51 @@ const countdown = (seconds) => {
 };
 
 const start = async () => {
-  console.log("开始");
+  logger.info("🚀 开始");
 
   if (!fs.existsSync(DOWNLOAD_DIR)) {
     fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
-    console.log(`创建下载目录: ${DOWNLOAD_DIR}`);
+    logger.success(`✅ 创建下载目录: ${DOWNLOAD_DIR}`);
   }
 
   while (true) {
     if (gracefulExit) {
-      console.log("安全退出。");
+      logger.warn("🛑 安全退出。");
       break;
     }
-    console.log(`获取第${pageNumber}页列表数据`);
+    logger.info(`📄 获取第${pageNumber}页列表数据`);
     const list = await getList();
     if (!list || !list.data || list.data.length === 0) {
-      console.log(`第${pageNumber}页没有数据，脚本结束。`);
+      logger.warn(`第${pageNumber}页没有数据，脚本结束。`);
       break;
     }
     // 检查是否有大于150M的种子
     if (list.data.some((item) => item.size > 150 * 1024 * 1024)) {
-      console.log("发现大于 150M 的种子，脚本停止。");
+      logger.warn("发现大于 150M 的种子，脚本停止。");
       break;
     }
-    console.log(`获取第${pageNumber}页列表数据成功`);
-    console.log("筛选掉上传为 0 和小于 11M 的数据");
+    logger.info("🔍 筛选掉上传为 0 和小于 11M 并未下载过的数据");
     list.data = list.data.filter(
       (item) => item.status.seeders !== "0" && item.size > 11 * 1024 * 1024
     );
-    console.log(`筛选完成，还剩数据 ${list.data.length} 条`);
-
     if (list.data.length > 0) {
-      console.log("开始查询历史记录");
       const historyData = await queryHistory(list.data);
-      console.log("筛选掉已下载数据");
       const filteredData = list.data.filter(
         (item) => !historyData.historyMap[item.id]
       );
-      console.log(`筛选完成，还剩数据 ${filteredData.length} 条`);
+      logger.info(`📄 筛选完成，还剩数据 ${filteredData.length} 条`);
       if (filteredData.length > 0) {
-        console.log("开始下载");
+        logger.info("⬇️ 开始下载");
         await loopDownload(filteredData);
-        console.log(`第 ${pageNumber} 页处理完毕，准备翻页`);
+        logger.info(`第 ${pageNumber} 页处理完毕，准备翻页`);
         if (gracefulExit) break;
         await countdown(DOWNLOAD_INTERVAL / 1000);
       } else {
-        console.log("本页没有需要下载的新数据。");
-        console.log(`第 ${pageNumber} 页处理完毕，准备翻页`);
+        logger.warn("本页没有需要下载的新数据。");
+        logger.info(`第 ${pageNumber} 页处理完毕，准备翻页`);
       }
     } else {
-      console.log(`第 ${pageNumber} 页没有符合条件的数据`);
+      logger.warn(`第 ${pageNumber} 页没有符合条件的数据`);
     }
 
     pageNumber++;
@@ -119,7 +132,7 @@ const start = async () => {
   // The script will now end when loopDownload finishes.
 };
 start().catch((err) => {
-  console.error("脚本执行时发生未捕获的错误:", err);
+  logger.error(`脚本执行时发生未捕获的错误: ${err}`);
 });
 
 // 循环下载 filteredData 数据
@@ -132,10 +145,14 @@ function loopDownload(filteredData) {
         return;
       }
       const item = filteredData[index];
-      console.log(`准备下载: ${item.name}，大小: ${formatBytes(item.size)}，本页还剩 ${filteredData.length - index} 个文件`);
+      logger.log(
+        `准备下载: ${pc.cyan(item.name)}，大小: ${pc.bold(
+          formatBytes(item.size)
+        )}，本页还剩 ${pc.yellow(filteredData.length - index)} 个文件`
+      );
       const torrentUrl = await torrent(item);
       if (torrentUrl) {
-        console.log(`下载链接为：${torrentUrl}`);
+        logger.success(`下载链接为：${torrentUrl}`);
         await downloadFile(torrentUrl, DOWNLOAD_DIR);
       }
 
@@ -144,6 +161,7 @@ function loopDownload(filteredData) {
         await countdown(DOWNLOAD_INTERVAL / 1000);
         await downloadNext();
       } else {
+        logger.success("✅ 本页文件下载完成");
         resolve();
       }
     };

@@ -33,7 +33,7 @@ export async function downloadFile(url, dir) {
 
     return new Promise((resolve, reject) => {
       writer.on("finish", () => {
-        console.log(`下载完成: ${destPath}`);
+        console.log(`✅ 下载完成: ${destPath}`);
         resolve();
       });
       writer.on("error", (err) => {
