@@ -2,21 +2,21 @@ import axios from "axios";
 import qs from "qs";
 import FormDataNode from "form-data"; // Node.js 下使用
 import { hmacSHA1 } from "../utils/index.js";
-
-const s = "HLkPcWmycL57mfJt";
-const authorization =
-  "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzZWFob3IwMDEiLCJ1aWQiOjM1Njc4OCwianRpIjoiNDE4NDBlZmEtNzQ1OS00NWMxLWEyMmMtZTZlMGI2ZWE2ODI3IiwiaXNzIjoiaHR0cHM6Ly9hcGkubS10ZWFtLmNjIiwiaWF0IjoxNzUzOTc2MzY1LCJleHAiOjE3NTY1NjgzNjV9.LdclaE_ohBzW2U0pE16WcwlYAMjNnag9LDZoncIHnQqSzDcJRSTalFyYrVsX_ye8FIiSWQMIgla_62_GPKbcOw";
-const did = "9c9c665984e54a6e8b239462aeafacb4";
-const cookie =
-  "cf_clearance=mIi9nEVYErj_u7ltliR6HU4t1gF_bwMKvl9M7D3bvIc-1746074003-1.2.1.1-.nI92fuJBSN..7X4e1ZGxlJeaG2YM2nd.X9.k5vh9DN.1kkSJLl03HS9ksI8FFZwlKj3zf8fuIdAgEc3IbDvnj0V2bxt1nQdVb9FivoPuBrTo5CqBiSAl7qF.Y.n3gHExr_TG.jImTAez61kscH8NGo5bSzfKfxPrWUZTQM6ucILGf6qHa9_Y0c2rUMGngFOhuHGxIFC7raZlo9OFD4dQim7ZZsIhspgNVS9TYGvSoU.eXpkSEGa54Yg0OWCsJH.3xJQOWz9z4yfyNJIKJZf3FXeIvZRWOvVCbFY.KbQ4ohCcpFTAt1FkFLqcRaL0vXY0JKCSNBOyQO3QLFN2AXWqAz7qUt3D8OZJRwyHlQh5INz0ezp4Mc0NqQvBmBa3KEV";
-const version = "1.1.4";
-const webVersion = "1140";
-const visitorid = "2dd42bd99e11b410c66c76bb03e46986";
+import {
+  API_BASE_URL,
+  SECRET_KEY,
+  AUTH_TOKEN,
+  DID,
+  COOKIE,
+  VERSION,
+  WEB_VERSION,
+  VISITOR_ID,
+} from "./config.js";
 
 // 你的签名函数
 function genSign(method, url, timestamp) {
   const signStr = `${method.toUpperCase()}&${url}&${timestamp}`;
-  return hmacSHA1(signStr, s); // s 是你的密钥
+  return hmacSHA1(signStr, SECRET_KEY); // 使用从配置中导入的密钥
 }
 
 /**
@@ -25,12 +25,8 @@ function genSign(method, url, timestamp) {
 function handlePostData(data, url, headers = {}) {
   const _timestamp = Date.now();
   const _sgin = genSign("POST", url, _timestamp);
-
-  // 🔹 FormData（浏览器或 Node.js）
-  if (
-    (typeof FormData !== "undefined" && data instanceof FormData) ||
-    data instanceof FormDataNode
-  ) {
+  // 🔹 FormData (Node.js)
+  if (data instanceof FormDataNode) {
     data.append("_timestamp", _timestamp);
     data.append("_sgin", _sgin);
 
@@ -60,14 +56,14 @@ function handlePostData(data, url, headers = {}) {
 
 // 创建 Axios 实例
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: API_BASE_URL, // 使用绝对路径
   headers: {
-    authorization,
-    did,
-    cookie,
-    version,
-    webVersion,
-    visitorid,
+    authorization: AUTH_TOKEN,
+    did: DID,
+    cookie: COOKIE,
+    version: VERSION,
+    webVersion: WEB_VERSION,
+    visitorid: VISITOR_ID,
   },
 });
 
@@ -95,5 +91,35 @@ api.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
+// 响应拦截器
+// api.interceptors.response.use(
+//   (response) => {
+//     // 对响应数据做点什么
+//     // 例如，只返回 data 部分
+//     if (response.data && response.data.code === 0) {
+//       return response.data;
+//     } else {
+//       // 处理业务错误
+//       const errorMessage =
+//         (response.data && response.data.message) || "API 返回未知错误";
+//       console.error("API Error:", errorMessage);
+//       return Promise.reject(new Error(errorMessage));
+//     }
+//   },
+//   (error) => {
+//     // 对响应错误做点什么
+//     console.error("Request Error:", error.message);
+//     if (error.response) {
+//       // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
+//       console.error("Error Response Status:", error.response.status);
+//       console.error("Error Response Data:", error.response.data);
+//     } else if (error.request) {
+//       // 请求已经成功发起，但没有收到响应
+//       console.error("Error Request: No response received");
+//     }
+//     return Promise.reject(error);
+//   }
+// );
 
 export default api;

@@ -1,5 +1,10 @@
 import { searchApi, queryHistoryApi, torrentApi } from "./api/search.js";
 import fs from "fs";
+import axios from "axios";
+import path from "path";
+
+const DOWNLOAD_DIR = "torrents";
+const DOWNLOAD_INTERVAL = 30 * 1000; // 30秒
 
 let pageNumber = 28;
 async function getList() {
@@ -18,15 +23,26 @@ async function queryHistory(data) {
 }
 
 async function torrent(data) {
-  const res = await torrentApi({
-    id: data.id,
-  });
-  console.log(234, res);
-  return res.data;
+  try {
+    const res = await torrentApi({
+      id: data.id,
+    });
+    console.log(22,res)
+    return res.data;
+  } catch (error) {
+    console.error(`获取 ${data.name} 的种子链接失败:`, error.message);
+    return null;
+  }
 }
 
 const start = async () => {
   console.log("开始");
+
+  if (!fs.existsSync(DOWNLOAD_DIR)) {
+    fs.mkdirSync(DOWNLOAD_DIR, { recursive: true });
+    console.log(`创建下载目录: ${DOWNLOAD_DIR}`);
+  }
+
   console.log(`获取第${pageNumber}页列表数据`);
   const list = await getList();
   console.log(`获取第${pageNumber}页列表数据成功`, list);
@@ -48,47 +64,65 @@ const start = async () => {
 
   console.log("开始生成下载链接");
   loopDownload(filteredData);
-  console.log("结束");
+  // The script will now end when loopDownload finishes.
 };
-start();
+start().catch((err) => {
+  console.error("脚本执行时发生未捕获的错误:", err);
+});
 
 // 循环下载 filteredData 数据
-const time = 30 * 1000; // 30秒
 function loopDownload(filteredData) {
   let index = 0;
   const downloadNext = async () => {
     if (index >= filteredData.length) {
       console.log("所有文件下载完成");
-    } else {
-      const item = filteredData[index];
-      console.log(12, item);
-      const torrentUrl = await torrent(item);
-      console.log(`下载链接为：${torrentUrl}`);
-      // 下载到本地
-      await downloadFile(torrentUrl, `./${item.name}.torrent`);
-      console.log(`下载完成`);
-      //等待time秒
-      await new Promise((resolve) => setTimeout(resolve, time));
-      index++;
-      downloadNext();
+      console.log("结束");
+      return;
     }
+    const item = filteredData[index];
+    console.log(`准备下载: ${item.name}`);
+    const torrentUrl = await torrent(item);
+    console.log(11,torrentUrl)
+    if (torrentUrl) {
+      console.log(`下载链接为：${torrentUrl}`);
+      // 清理文件名中的非法字符
+      const safeFilename = item.name.replace(/[\/\\?%*:|"<>]/g, "-") + ".torrent";
+      const destPath = path.join(DOWNLOAD_DIR, safeFilename);
+      await downloadFile(torrentUrl, destPath);
+    }
+
+    // 等待
+    console.log(`等待 ${DOWNLOAD_INTERVAL / 1000} 秒...`);
+    await new Promise((resolve) => setTimeout(resolve, DOWNLOAD_INTERVAL));
+    index++;
+    await downloadNext();
   };
   downloadNext();
 }
 
 // node 下载文件
 async function downloadFile(url, dest) {
-  const writer = fs.createWriteStream(dest);
-  const response = await axios({
-    url,
-    method: "GET",
-    responseType: "stream",
-  });
+  try {
+    const writer = fs.createWriteStream(dest);
+    const response = await axios({
+      url,
+      method: "GET",
+      responseType: "stream",
+    });
 
-  response.data.pipe(writer);
+    response.data.pipe(writer);
 
-  return new Promise((resolve, reject) => {
-    writer.on("finish", resolve);
-    writer.on("error", reject);
-  });
+    return new Promise((resolve, reject) => {
+      writer.on("finish", () => {
+        console.log(`下载完成: ${dest}`);
+        resolve();
+      });
+      writer.on("error", (err) => {
+        console.error(`写入文件失败: ${dest}`, err);
+        reject(err);
+      });
+    });
+  } catch (error) {
+    console.error(`下载文件失败: ${url}`, error.message);
+  }
 }

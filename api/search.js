@@ -1,4 +1,5 @@
 import api from "./index.js";
+import FormData from "form-data";
 
 export const searchApi = async (data) => {
   return await api({
@@ -29,12 +30,9 @@ export const torrentApi = async (data) => {
     formData.append(key, value);
   });
 
-
   return await api({
     method: "POST",
     url: `/api/torrent/genDlToken`,
-    data,
-     data: formData,
-    // headers: formData.getHeaders(), // 让 axios 自动加 boundary
+    data: formData,
   }).then((res) => res.data);
 };
