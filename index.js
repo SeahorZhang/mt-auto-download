@@ -6,8 +6,8 @@ import pc from "picocolors";
 const DOWNLOAD_DIR = "torrents";
 const DOWNLOAD_INTERVAL = 30 * 1000; // 30秒
 
-let pageNumber = 1;
-const searchType = "音乐"; // 综合 电影 记录 剧集 音乐 动漫 体育 软件 游戏 电子书 有声书 教育影片 其他
+let pageNumber = 12;
+const searchType = "剧集"; // 综合 电影 记录 剧集 音乐 动漫 体育 软件 游戏 电子书 有声书 教育影片 其他
 let gracefulExit = false;
 
 process.on("SIGINT", () => {
@@ -86,11 +86,6 @@ const start = async () => {
       logger.warn(`第${pageNumber}页没有数据，脚本结束。`);
       break;
     }
-    // 检查是否有大于150M的种子
-    if (list.data.some((item) => item.size > 150 * 1024 * 1024)) {
-      logger.warn("发现大于 150M 的种子，脚本停止。");
-      break;
-    }
     logger.info("🔍 筛选掉上传为 0 和小于 11M 并未下载过的数据");
     list.data = list.data.filter(
       (item) => item.status.seeders !== "0" && item.size > 11 * 1024 * 1024
@@ -128,11 +123,19 @@ function loopDownload(filteredData) {
   return new Promise((resolve) => {
     let index = 0;
     const downloadNext = async () => {
-      if (index >= filteredData.length) {
+      if (index >= filteredData.length || gracefulExit) {
         resolve();
         return;
       }
       const item = filteredData[index];
+
+      if (item.size > 150 * 1024 * 1024) {
+        logger.warn(`发现大于 150M 的种子 "${item.name}"，脚本将停止。`);
+        gracefulExit = true;
+        resolve();
+        return;
+      }
+
       logger.log(
         `准备下载: ${pc.cyan(item.name)}，大小: ${pc.bold(
           formatBytes(item.size)
