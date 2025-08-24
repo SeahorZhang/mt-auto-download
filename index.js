@@ -1,26 +1,13 @@
 import { searchApi, queryHistoryApi, torrentApi } from "./api/search.js";
 import fs from "fs";
-import { downloadFile } from "./utils/index.js";
+import { downloadFile, formatBytes, logger } from "./utils/index.js";
 import pc from "picocolors";
-
-const logger = {
-  info: (msg) => console.log(pc.blue(msg)),
-  success: (msg) => console.log(pc.green(msg)),
-  warn: (msg) => console.log(pc.yellow(msg)),
-  error: (msg) => console.error(pc.red(msg)),
-  log: (msg) => console.log(msg),
-};
-
-function formatBytes(bytes, decimals = 2) {
-  if (bytes === 0) return "0 MB";
-  const mb = bytes / 1024 / 1024;
-  return `${mb.toFixed(decimals)} MB`;
-}
 
 const DOWNLOAD_DIR = "torrents";
 const DOWNLOAD_INTERVAL = 30 * 1000; // 30秒
 
-let pageNumber = 75;
+let pageNumber = 1;
+const searchType = "音乐"; // 综合 电影 记录 剧集 音乐 动漫 体育 软件 游戏 电子书 有声书 教育影片 其他
 let gracefulExit = false;
 
 process.on("SIGINT", () => {
@@ -32,6 +19,7 @@ async function getList() {
   const res = await searchApi({
     pageNumber,
     pageSize: 100,
+    type: searchType,
   });
   return res.data;
 }
@@ -92,7 +80,7 @@ const start = async () => {
       logger.warn("🛑 安全退出。");
       break;
     }
-    logger.info(`📄 获取第${pageNumber}页列表数据`);
+    logger.info(`📄 获取${searchType}类第${pageNumber}页列表数据`);
     const list = await getList();
     if (!list || !list.data || list.data.length === 0) {
       logger.warn(`第${pageNumber}页没有数据，脚本结束。`);
@@ -161,12 +149,10 @@ function loopDownload(filteredData) {
         await countdown(DOWNLOAD_INTERVAL / 1000);
         await downloadNext();
       } else {
-        logger.success("✅ 本页文件下载完成");
+        logger.success(`✅ ${pageNumber}页文件下载完成`);
         resolve();
       }
     };
     downloadNext();
   });
 }
-
-

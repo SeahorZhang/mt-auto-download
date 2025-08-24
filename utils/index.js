@@ -2,6 +2,7 @@ import { createHmac } from "crypto";
 import axios from "axios";
 import path from "path";
 import fs from "fs";
+import pc from "picocolors";
 
 export function hmacSHA1(message, key) {
   return createHmac("sha1", key).update(message).digest("base64");
@@ -45,3 +46,18 @@ export async function downloadFile(url, dir) {
     console.error(`下载文件失败: ${url}`, error.message);
   }
 }
+
+export function formatBytes(bytes, decimals = 2) {
+  if (bytes === 0) return "0 MB";
+  const mb = bytes / 1024 / 1024;
+  return `${mb.toFixed(decimals)} MB`;
+}
+
+
+export const logger = {
+  info: (msg) => console.log(pc.blue(msg)),
+  success: (msg) => console.log(pc.green(msg)),
+  warn: (msg) => console.log(pc.yellow(msg)),
+  error: (msg) => console.error(pc.red(msg)),
+  log: (msg) => console.log(msg),
+};
