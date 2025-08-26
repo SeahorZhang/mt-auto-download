@@ -6,12 +6,16 @@ import pc from "picocolors";
 const DOWNLOAD_DIR = "torrents";
 const DOWNLOAD_INTERVAL = 30 * 1000; // 30秒
 
-let pageNumber = 12;
+let pageNumber = 19;
 const searchType = "剧集"; // 综合 电影 记录 剧集 音乐 动漫 体育 软件 游戏 电子书 有声书 教育影片 其他
 let gracefulExit = false;
 
 process.on("SIGINT", () => {
-  logger.warn("\n收到退出信号，将在当前页面下载完成后安全退出...");
+  if (gracefulExit) {
+    logger.error("\n强制退出程序。");
+    process.exit(1);
+  }
+  logger.warn("\n收到退出信号，将在当前页面下载完成后安全退出...（再次按下 Ctrl+C 将强制退出）");
   gracefulExit = true;
 });
 
@@ -123,7 +127,7 @@ function loopDownload(filteredData) {
   return new Promise((resolve) => {
     let index = 0;
     const downloadNext = async () => {
-      if (index >= filteredData.length || gracefulExit) {
+      if (index >= filteredData.length) {
         resolve();
         return;
       }
@@ -149,8 +153,14 @@ function loopDownload(filteredData) {
 
       index++;
       if (index < filteredData.length) {
-        await countdown(DOWNLOAD_INTERVAL / 1000);
-        await downloadNext();
+        if (gracefulExit) {
+          // 如果收到了退出信号，就不再等待，直接开始下一个下载
+          await countdown((DOWNLOAD_INTERVAL - 20 * 1000) / 1000);
+          await downloadNext();
+        } else {
+          await countdown(DOWNLOAD_INTERVAL / 1000);
+          await downloadNext();
+        }
       } else {
         logger.success(`✅ ${pageNumber}页文件下载完成`);
         resolve();
