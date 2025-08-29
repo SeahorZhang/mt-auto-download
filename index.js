@@ -6,7 +6,7 @@ import pc from "picocolors";
 const DOWNLOAD_DIR = "torrents";
 const DOWNLOAD_INTERVAL = 30 * 1000; // 30秒
 
-let pageNumber = 19;
+let pageNumber = 22;
 const searchType = "剧集"; // 综合 电影 记录 剧集 音乐 动漫 体育 软件 游戏 电子书 有声书 教育影片 其他
 let gracefulExit = false;
 
