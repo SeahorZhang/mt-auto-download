@@ -34,7 +34,7 @@ export async function downloadFile(url, dir) {
 
     return new Promise((resolve, reject) => {
       writer.on("finish", () => {
-        console.log(`✅ 下载完成: ${destPath}`);
+      logger.success(`✅ 下载完成: ${filename}`);
         resolve();
       });
       writer.on("error", (err) => {
