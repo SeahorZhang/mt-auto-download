@@ -1,27 +1,21 @@
 // qbittorrent-api.js
-import axios from 'axios';
-import FormData from 'form-data';
-import fs from 'fs';
+import axios from "axios";
+import FormData from "form-data";
+import fs from "fs";
 
-// 简单的日志封装（你原有 logger 可替换进来）
+// 简单的日志封装
 const logger = {
   success: (msg) => console.log(`\x1b[32m${msg}\x1b[0m`),
   error: (msg) => console.log(`\x1b[31m${msg}\x1b[0m`),
   info: (msg) => console.log(`\x1b[34m${msg}\x1b[0m`),
-  warn: (msg) => console.log(`\x1b[33m${msg}\x1b[0m`)
+  warn: (msg) => console.log(`\x1b[33m${msg}\x1b[0m`),
 };
 
 export class QBittorrentAPI {
-  /**
-   * config:
-   *  BASE_URL, USERNAME, PASSWORD,
-   *  DOWNLOAD_PATH (临时目录), FINAL_PATH (完成目录),
-   *  CATEGORY (可选), TAGS (可选)
-   */
   constructor(config) {
     this.config = {
-      USE_CATEGORY: true, // 默认开启 category
-      ...config
+      USE_CATEGORY: true,
+      ...config,
     };
     this.baseUrl = this.config.BASE_URL;
     this.username = this.config.USERNAME;
@@ -30,31 +24,71 @@ export class QBittorrentAPI {
     this.isConnected = false;
 
     if (!this.config.DOWNLOAD_PATH || !this.config.FINAL_PATH) {
-      logger.error('❌ qBittorrent配置不完整，缺少 DOWNLOAD_PATH 或 FINAL_PATH');
+      logger.error(
+        "❌ qBittorrent配置不完整，缺少 DOWNLOAD_PATH 或 FINAL_PATH"
+      );
     }
+  }
+
+  // 获取默认的种子参数
+  _getDefaultTorrentParams() {
+    const params = {
+      addToTopOfQueue: "false",
+      autoTMM: "false",
+      contentLayout: "Original",
+      downloadPath: this.config.DOWNLOAD_PATH,
+      firstLastPiecePrio: "false",
+      paused: "false",
+      stopped: "false",
+      savepath: this.config.FINAL_PATH,
+      sequentialDownload: "false",
+      skip_checking: "false",
+      stopCondition: "None",
+      useDownloadPath: "true",
+    };
+
+    if (this.config.USE_CATEGORY && this.config.CATEGORY) {
+      params.category = this.config.CATEGORY;
+    }
+    if (this.config.TAGS) {
+      params.tags = this.config.TAGS;
+    }
+
+    return params;
+  }
+
+  // 记录种子参数日志
+  _logTorrentParams(params, type = "种子") {
+    logger.info(`🔧 添加${type}参数:`);
+    Object.entries(params).forEach(([key, value]) => {
+      logger.info(`  • ${key}: ${value}`);
+    });
   }
 
   async connect() {
     try {
-      const loginData = new URLSearchParams();
-      loginData.append('username', this.username);
-      loginData.append('password', this.password);
-
-      const response = await axios.post(`${this.baseUrl}/api/v2/auth/login`, loginData, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        timeout: 10000,
-        validateStatus: (status) => status < 500
+      const loginData = new URLSearchParams({
+        username: this.username,
+        password: this.password,
       });
 
+      const response = await axios.post(
+        `${this.baseUrl}/api/v2/auth/login`,
+        loginData,
+        {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          timeout: 10000,
+          validateStatus: (status) => status < 500,
+        }
+      );
+
       if (response.status === 200) {
-        const setCookie = response.headers['set-cookie'];
+        const setCookie = response.headers["set-cookie"];
         if (setCookie) {
-          this.cookie = setCookie[0].split(';')[0];
+          this.cookie = setCookie[0].split(";")[0];
         }
         this.isConnected = true;
-        logger.success('✅ 成功连接到 qBittorrent');
-
-        // 登录后立即设置全局偏好，保证后续任务使用这些全局设置
+        logger.success("✅ 成功连接到 qBittorrent");
         await this.setGlobalPreferences();
         return true;
       } else {
@@ -70,11 +104,13 @@ export class QBittorrentAPI {
   async setGlobalPreferences() {
     try {
       let qbSavePath = this.config.FINAL_PATH;
-      // 如果 FINAL_PATH 以 CATEGORY 结尾，则截取 FINAL_PATH 的父目录作为 qbSavePath
       if (this.config.USE_CATEGORY && this.config.CATEGORY) {
         const categorySegment = `/${this.config.CATEGORY}`;
         if (qbSavePath.endsWith(categorySegment)) {
-          qbSavePath = qbSavePath.substring(0, qbSavePath.length - categorySegment.length);
+          qbSavePath = qbSavePath.substring(
+            0,
+            qbSavePath.length - categorySegment.length
+          );
         }
       }
 
@@ -83,28 +119,30 @@ export class QBittorrentAPI {
         temp_path_enabled: true,
         temp_path: this.config.DOWNLOAD_PATH,
         auto_tmm_enabled: true,
-        // 开启迁移开关，保证完成后会发生"搬家"
         torrent_changed_tmm_enabled: true,
         save_path_changed_tmm_enabled: true,
-        category_changed_tmm_enabled: true
+        category_changed_tmm_enabled: true,
       };
 
       const preferencesData = new URLSearchParams({
-        json: JSON.stringify(prefs)
+        json: JSON.stringify(prefs),
       });
-      logger.info(`🔧 发送给 qBittorrent 的全局偏好: ${JSON.stringify(prefs)}`);
 
-      const response = await axios.post(`${this.baseUrl}/api/v2/app/setPreferences`, preferencesData, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Cookie': this.cookie
-        },
-        timeout: 10000,
-        validateStatus: (status) => status < 500
-      });
+      const response = await axios.post(
+        `${this.baseUrl}/api/v2/app/setPreferences`,
+        preferencesData,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Cookie: this.cookie,
+          },
+          timeout: 10000,
+          validateStatus: (status) => status < 500,
+        }
+      );
 
       if (response.status === 200) {
-        logger.info('🔧 已设置 qBittorrent 全局偏好');
+        logger.info("🔧 已设置 qBittorrent 全局偏好");
         logger.info(`📁 临时下载路径: ${this.config.DOWNLOAD_PATH}`);
         logger.info(`📁 最终保存路径: ${this.config.FINAL_PATH}`);
       } else {
@@ -117,9 +155,8 @@ export class QBittorrentAPI {
 
   // 添加 .torrent 文件
   async addTorrentFile(torrentPath) {
-    if (!this.isConnected) {
-      const connected = await this.connect();
-      if (!connected) return false;
+    if (!this.isConnected && !(await this.connect())) {
+      return false;
     }
 
     try {
@@ -129,45 +166,24 @@ export class QBittorrentAPI {
       }
 
       const formData = new FormData();
-      formData.append('torrents', fs.createReadStream(torrentPath));
+      formData.append("torrents", fs.createReadStream(torrentPath));
 
-      formData.append('addToTopOfQueue', 'false');
-      formData.append('autoTMM', 'false');
-      formData.append('contentLayout', 'Original');
-      formData.append('downloadPath', this.config.DOWNLOAD_PATH);
-      formData.append('firstLastPiecePrio', 'false');
-      formData.append('paused', 'false');
-      formData.append('stopped', 'false');
-      formData.append('savepath', this.config.DOWNLOAD_PATH);
-      formData.append('sequentialDownload', 'false');
-      formData.append('skip_checking', 'false');
-      formData.append('stopCondition', 'None');
-      formData.append('useDownloadPath', 'true');
-
-      if (this.config.USE_CATEGORY && this.config.CATEGORY) formData.append('category', this.config.CATEGORY);
-      if (this.config.TAGS) formData.append('tags', this.config.TAGS);
-
-      logger.info('🔧 添加种子 FormData 参数:');
-      logger.info(`  • addToTopOfQueue: false`);
-      logger.info(`  • autoTMM: false`);
-      logger.info(`  • contentLayout: Original`);
-      logger.info(`  • downloadPath: ${this.config.DOWNLOAD_PATH}`);
-      logger.info(`  • firstLastPiecePrio: false`);
-      logger.info(`  • paused: false`);
-      logger.info(`  • stopped: false`);
-      logger.info(`  • savepath: ${this.config.DOWNLOAD_PATH}`);
-      logger.info(`  • sequentialDownload: false`);
-      logger.info(`  • skip_checking: false`);
-      logger.info(`  • stopCondition: None`);
-      logger.info(`  • useDownloadPath: true`);
-      if (this.config.USE_CATEGORY && this.config.CATEGORY) logger.info(`  • category: ${this.config.CATEGORY}`);
-      if (this.config.TAGS) logger.info(`  • tags: ${this.config.TAGS}`);
-
-      const response = await axios.post(`${this.baseUrl}/api/v2/torrents/add`, formData, {
-        headers: { ...formData.getHeaders(), 'Cookie': this.cookie },
-        timeout: 30000,
-        validateStatus: (status) => status < 500
+      const params = this._getDefaultTorrentParams();
+      Object.entries(params).forEach(([key, value]) => {
+        formData.append(key, value);
       });
+
+      this._logTorrentParams(params, "种子");
+
+      const response = await axios.post(
+        `${this.baseUrl}/api/v2/torrents/add`,
+        formData,
+        {
+          headers: { ...formData.getHeaders(), Cookie: this.cookie },
+          timeout: 30000,
+          validateStatus: (status) => status < 500,
+        }
+      );
 
       if (response.status === 200) {
         logger.success(`✅ 种子已成功添加: ${torrentPath}`);
@@ -184,55 +200,33 @@ export class QBittorrentAPI {
 
   // 添加磁力链接
   async addMagnet(magnet) {
-    if (!this.isConnected) {
-      const connected = await this.connect();
-      if (!connected) return false;
+    if (!this.isConnected && !(await this.connect())) {
+      return false;
     }
 
     try {
       const params = new URLSearchParams();
-      params.append('urls', magnet);
-      params.append('addToTopOfQueue', 'false');
-      params.append('autoTMM', 'false');
-      params.append('contentLayout', 'Original');
-      params.append('downloadPath', this.config.DOWNLOAD_PATH);
-      params.append('firstLastPiecePrio', 'false');
-      params.append('paused', 'false');
-      params.append('stopped', 'false');
-      params.append('savepath', this.config.DOWNLOAD_PATH);
-      params.append('sequentialDownload', 'false');
-      params.append('skip_checking', 'false');
-      params.append('stopCondition', 'None');
-      params.append('useDownloadPath', 'true');
+      params.append("urls", magnet);
 
-      if (this.config.USE_CATEGORY && this.config.CATEGORY) params.append('category', this.config.CATEGORY);
-      if (this.config.TAGS) params.append('tags', this.config.TAGS);
-
-      logger.info('🔧 添加磁力 参数:');
-      logger.info(`  • urls: ${magnet}`);
-      logger.info(`  • addToTopOfQueue: false`);
-      logger.info(`  • autoTMM: false`);
-      logger.info(`  • contentLayout: Original`);
-      logger.info(`  • downloadPath: ${this.config.DOWNLOAD_PATH}`);
-      logger.info(`  • firstLastPiecePrio: false`);
-      logger.info(`  • paused: false`);
-      logger.info(`  • stopped: false`);
-      logger.info(`  • savepath: ${this.config.DOWNLOAD_PATH}`);
-      logger.info(`  • sequentialDownload: false`);
-      logger.info(`  • skip_checking: false`);
-      logger.info(`  • stopCondition: None`);
-      logger.info(`  • useDownloadPath: true`);
-      if (this.config.USE_CATEGORY && this.config.CATEGORY) logger.info(`  • category: ${this.config.CATEGORY}`);
-      if (this.config.TAGS) logger.info(`  • tags: ${this.config.TAGS}`);
-
-      const response = await axios.post(`${this.baseUrl}/api/v2/torrents/add`, params, {
-        headers: { 'Cookie': this.cookie },
-        timeout: 30000,
-        validateStatus: (status) => status < 500
+      const defaultParams = this._getDefaultTorrentParams();
+      Object.entries(defaultParams).forEach(([key, value]) => {
+        params.append(key, value);
       });
 
+      this._logTorrentParams({ urls: magnet, ...defaultParams }, "磁力");
+
+      const response = await axios.post(
+        `${this.baseUrl}/api/v2/torrents/add`,
+        params,
+        {
+          headers: { Cookie: this.cookie },
+          timeout: 30000,
+          validateStatus: (status) => status < 500,
+        }
+      );
+
       if (response.status === 200) {
-        logger.success('✅ 磁力链接已成功添加');
+        logger.success("✅ 磁力链接已成功添加");
         return true;
       } else {
         logger.error(`❌ 添加磁力失败，状态码: ${response.status}`);
@@ -245,15 +239,14 @@ export class QBittorrentAPI {
   }
 
   async getTorrents() {
-    if (!this.isConnected) {
-      const connected = await this.connect();
-      if (!connected) return [];
+    if (!this.isConnected && !(await this.connect())) {
+      return [];
     }
 
     try {
       const response = await axios.get(`${this.baseUrl}/api/v2/torrents/info`, {
-        headers: { 'Cookie': this.cookie },
-        timeout: 10000
+        headers: { Cookie: this.cookie },
+        timeout: 10000,
       });
 
       if (response.status === 200) {
@@ -271,19 +264,22 @@ export class QBittorrentAPI {
   async disconnect() {
     try {
       if (this.cookie) {
-        await axios.post(`${this.baseUrl}/api/v2/auth/logout`, {}, {
-          headers: { 'Cookie': this.cookie },
-          timeout: 5000,
-          validateStatus: (status) => status < 500
-        });
+        await axios.post(
+          `${this.baseUrl}/api/v2/auth/logout`,
+          {},
+          {
+            headers: { Cookie: this.cookie },
+            timeout: 5000,
+            validateStatus: (status) => status < 500,
+          }
+        );
       }
-      this.isConnected = false;
-      this.cookie = null;
-      logger.info('🔌 已断开 qBittorrent 连接');
     } catch (error) {
+      // 忽略断开连接时的错误
+    } finally {
       this.isConnected = false;
       this.cookie = null;
-      logger.info('🔌 已断开 qBittorrent 连接');
+      logger.info("🔌 已断开 qBittorrent 连接");
     }
   }
 }

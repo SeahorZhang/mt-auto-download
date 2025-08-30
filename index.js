@@ -7,6 +7,7 @@ async function main() {
   intro(pc.cyan("MT Auto Download"));
 
   const categories = [
+    "全部顺序执行",
     "综合",
     "电影",
     "记录",
@@ -20,7 +21,6 @@ async function main() {
     "有声书",
     "教育影片",
     "其他",
-    "全部顺序执行",
   ];
 
   const chosenType = await select({
