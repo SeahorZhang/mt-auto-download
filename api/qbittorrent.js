@@ -68,9 +68,9 @@ export class QBittorrentAPI {
       
       // 添加选项
       const defaultOptions = {
-        savepath: '/downloads/刷魔力值',
-        category: '刷魔力值',
-        tags: '刷魔力值,待转移',
+        savepath: this.config.DOWNLOAD_PATH, // 使用下载时的临时路径
+        category: this.config.CATEGORY,
+        tags: this.config.TAGS,
         ...options
       };
 
@@ -92,6 +92,12 @@ export class QBittorrentAPI {
 
       if (response.status === 200) {
         logger.success(`✅ 种子已成功添加到qBittorrent: ${torrentPath}`);
+        logger.info(`📁 下载路径: ${this.config.DOWNLOAD_PATH}`);
+        logger.info(`📁 完成后将移动到: ${this.config.FINAL_PATH}`);
+        
+        // 设置完成后的移动路径（通过标签或其他方式）
+        await this.setTorrentMoveOnComplete(torrentPath);
+        
         return true;
       } else {
         logger.error(`❌ 添加种子失败，状态码: ${response.status}`);
@@ -128,6 +134,37 @@ export class QBittorrentAPI {
     } catch (error) {
       logger.error(`❌ 获取种子列表失败: ${error.message}`);
       return [];
+    }
+  }
+
+  async setTorrentMoveOnComplete(torrentPath) {
+    try {
+      // 获取刚添加的种子信息
+      const torrents = await this.getTorrents();
+      const torrentName = path.basename(torrentPath, '.torrent');
+      
+      // 查找刚添加的种子
+      const torrent = torrents.find(t => t.name.includes(torrentName) || torrentName.includes(t.name));
+      
+      if (torrent) {
+        // 设置完成后的移动路径
+        const moveData = new URLSearchParams();
+        moveData.append('hashes', torrent.hash);
+        moveData.append('location', this.config.FINAL_PATH);
+        
+        await axios.post(`${this.baseUrl}/api/v2/torrents/setLocation`, moveData, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Cookie': this.cookie,
+          },
+          timeout: 10000,
+          validateStatus: (status) => status < 500
+        });
+        
+        logger.info(`📁 已设置种子 "${torrent.name}" 完成后的移动路径: ${this.config.FINAL_PATH}`);
+      }
+    } catch (error) {
+      logger.warn(`⚠️ 设置移动路径失败: ${error.message}`);
     }
   }
 

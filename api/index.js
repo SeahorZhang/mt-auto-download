@@ -2,6 +2,8 @@ import axios from "axios";
 import qs from "qs";
 import FormDataNode from "form-data"; // Node.js 下使用
 import { hmacSHA1 } from "../utils/index.js";
+import { globalRateLimiter } from "../utils/rateLimiter.js";
+import { logger } from "../utils/index.js";
 import {
   API_BASE_URL,
   SECRET_KEY,
@@ -69,7 +71,11 @@ const api = axios.create({
 
 // 请求拦截器
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    // 请求频率控制
+    await globalRateLimiter.waitForNextSlot();
+    globalRateLimiter.recordRequest();
+    
     const method = (config.method || "GET").toUpperCase();
 
     if (method === "POST") {
@@ -93,33 +99,47 @@ api.interceptors.request.use(
 );
 
 // 响应拦截器
-// api.interceptors.response.use(
-//   (response) => {
-//     // 对响应数据做点什么
-//     // 例如，只返回 data 部分
-//     if (response.data && response.data.code === 0) {
-//       return response.data;
-//     } else {
-//       // 处理业务错误
-//       const errorMessage =
-//         (response.data && response.data.message) || "API 返回未知错误";
-//       console.error("API Error:", errorMessage);
-//       return Promise.reject(new Error(errorMessage));
-//     }
-//   },
-//   (error) => {
-//     // 对响应错误做点什么
-//     console.error("Request Error:", error.message);
-//     if (error.response) {
-//       // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
-//       console.error("Error Response Status:", error.response.status);
-//       console.error("Error Response Data:", error.response.data);
-//     } else if (error.request) {
-//       // 请求已经成功发起，但没有收到响应
-//       console.error("Error Request: No response received");
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+api.interceptors.response.use(
+  (response) => {
+    // 检查API响应状态
+    if (response.data && response.data.code !== undefined) {
+      // 将code转换为数字进行比较，因为API返回的code是字符串
+      const code = parseInt(response.data.code, 10);
+      if (code === 0) {
+        // 成功响应，直接返回
+        return response;
+      } else {
+        // 错误响应
+        const errorMessage = response.data.message || "API 返回错误";
+        logger.error(`API Error (${response.data.code}): ${errorMessage}`);
+        return Promise.reject(new Error(errorMessage));
+      }
+    }
+    return response;
+  },
+  (error) => {
+    // 处理网络错误
+    if (error.response) {
+      const status = error.response.status;
+      const message = error.response.data?.message || "请求失败";
+      
+      if (status === 429) {
+        logger.error("请求频率过高，服务器限制访问");
+      } else if (status === 401) {
+        logger.error("认证失败，请检查token是否有效");
+      } else if (status === 403) {
+        logger.error("访问被拒绝，可能被服务器封禁");
+      } else {
+        logger.error(`HTTP ${status}: ${message}`);
+      }
+    } else if (error.request) {
+      logger.error("网络连接失败，请检查网络连接");
+    } else {
+      logger.error(`请求错误: ${error.message}`);
+    }
+    
+    return Promise.reject(error);
+  }
+);
 
 export default api;

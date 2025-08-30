@@ -5,6 +5,8 @@
 ## 功能特性
 
 - 自动搜索和下载M-Team种子
+- 支持多分类自动切换处理
+- 发现大于150MB种子时自动切换到下一个分类
 - 支持自动上传种子到qBittorrent（使用原生JavaScript实现）
 - 可配置的下载大小限制
 - 自动跳过已下载的种子
@@ -98,15 +100,24 @@ pnpm test-qb
 
 ## 功能说明
 
+### 多分类自动处理
+
+程序会按顺序处理多个分类：
+
+1. **自动分类切换**: 按配置的分类列表顺序处理
+2. **大小限制检测**: 发现大于150MB种子时自动切换到下一个分类
+3. **智能跳过**: 当前分类无数据时自动切换到下一个分类
+
 ### 自动上传到qBittorrent
 
 当种子下载成功后，程序会自动：
 
 1. 连接到qBittorrent Web UI
 2. 上传种子文件
-3. 设置保存路径为 `/downloads/刷魔力值`
-4. 添加分类 `刷魔力值`
-5. 添加标签 `刷魔力值,待转移`
+3. 设置下载路径为 `/downloads/下载中`
+4. 设置完成后的移动路径为 `/downloads/刷魔力值`
+5. 添加分类 `刷魔力值`
+6. 添加标签 `刷魔力值,待转移`
 
 ### 配置选项
 
@@ -116,9 +127,10 @@ pnpm test-qb
 - `DOWNLOAD.MIN_SIZE`: 最小下载大小
 
 #### 搜索配置
-- `SEARCH.TYPE`: 搜索类型
+- `SEARCH.TYPES`: 要处理的分类列表
+- `SEARCH.CURRENT_TYPE_INDEX`: 当前处理的分类索引
 - `SEARCH.PAGE_SIZE`: 每页数量
-- `SEARCH.START_PAGE`: 起始页码
+- `SEARCH.START_PAGE`: 每个分类的起始页码
 - `SEARCH.PAGE_INTERVAL`: 翻页间隔（毫秒）
 
 #### qBittorrent配置
@@ -126,7 +138,8 @@ pnpm test-qb
 - `QBITTORRENT.BASE_URL`: qBittorrent Web UI地址
 - `QBITTORRENT.USERNAME`: qBittorrent用户名
 - `QBITTORRENT.PASSWORD`: qBittorrent密码
-- `QBITTORRENT.SAVE_PATH`: 种子下载保存路径
+- `QBITTORRENT.DOWNLOAD_PATH`: 下载时的临时路径
+- `QBITTORRENT.FINAL_PATH`: 完成后的最终保存路径
 - `QBITTORRENT.CATEGORY`: 种子分类
 - `QBITTORRENT.TAGS`: 种子标签（逗号分隔）
 
