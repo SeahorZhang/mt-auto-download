@@ -40,6 +40,7 @@ export const CONFIG = {
     FINAL_PATH: '/downloads/刷魔力值', // 完成后的最终保存路径
     CATEGORY: '刷魔力值',   // 分类
     TAGS: '刷魔力值,待转移', // 标签
+    USE_CATEGORY: true,    // 是否在添加种子时传递分类
     TIMEOUT: 10000         // qBittorrent连接超时时间
   },
   LOG: {
