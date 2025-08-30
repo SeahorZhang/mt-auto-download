@@ -51,11 +51,25 @@ async function main() {
       const t = runCategories[i];
       const effectiveStartPage = i === 0 ? startPage : 1;
       const app = new App({ startPage: effectiveStartPage, type: t });
-      await app.start();
+      const result = await app.start();
+      
+      // 检查是否为认证错误导致的停止
+      if (result && result.stopImmediately && !result.gracefulExit) {
+        logger.error("🚨 程序因认证错误而停止");
+        outro(pc.red("程序因认证错误而停止，请检查配置"));
+        return;
+      }
     }
   } else {
     const app = new App({ startPage, type: chosenType });
-    await app.start();
+    const result = await app.start();
+    
+    // 检查是否为认证错误导致的停止
+    if (result && result.stopImmediately && !result.gracefulExit) {
+      logger.error("🚨 程序因认证错误而停止");
+      outro(pc.red("程序因认证错误而停止，请检查配置"));
+      return;
+    }
   }
 
   outro(pc.green("任务完成"));

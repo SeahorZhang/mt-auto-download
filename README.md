@@ -1,160 +1,96 @@
 # MT Auto Download
 
-自动下载M-Team种子的工具，支持自动上传到qBittorrent进行刷魔力值。
+自动下载 M-Team 种子的工具，支持自动分类、qBittorrent 集成等功能。
 
-## 功能特性
+## 🚀 快速开始
 
-- 自动搜索和下载M-Team种子
-- 支持多分类自动切换处理
-- 发现大于150MB种子时自动切换到下一个分类
-- 支持自动上传种子到qBittorrent（使用原生JavaScript实现）
-- 可配置的下载大小限制
-- 自动跳过已下载的种子
-- 支持优雅退出
-- 无需额外依赖包，使用axios直接调用qBittorrent API
-
-## 安装依赖
-
+### 1. 安装依赖
 ```bash
 pnpm install
 ```
 
-## 配置
-
-### 1. 基础配置
-
-编辑 `config/index.js` 文件：
-
-```javascript
-export const CONFIG = {
-  DOWNLOAD: {
-    DIR: 'torrents',           // 种子文件保存目录
-    INTERVAL: 30 * 1000,       // 下载间隔（毫秒）
-    MAX_SIZE: 150 * 1024 * 1024, // 最大下载大小（150MB）
-    MIN_SIZE: 11 * 1024 * 1024,  // 最小下载大小（11MB）
-  },
-  SEARCH: {
-    TYPE: '剧集',              // 搜索类型
-    PAGE_SIZE: 100,            // 每页数量
-    START_PAGE: 1,             // 起始页码
-    PAGE_INTERVAL: 5 * 1000,   // 翻页间隔（5秒）
-  },
-  QBITTORRENT: {
-    ENABLED: true,             // 是否启用qBittorrent自动上传
-    BASE_URL: 'http://localhost:8080', // qBittorrent Web UI地址
-    USERNAME: 'admin',         // qBittorrent用户名
-    PASSWORD: 'admin',         // qBittorrent密码
-    SAVE_PATH: '/downloads/刷魔力值', // 保存路径
-    CATEGORY: '刷魔力值',       // 分类
-    TAGS: '刷魔力值,待转移'     // 标签
-  }
-};
-```
-
-### 2. qBittorrent配置
-
-确保你的qBittorrent已启用Web UI：
-
-1. 打开qBittorrent
-2. 进入 `工具` -> `选项` -> `Web UI`
-3. 勾选 `Web用户界面(远程控制)`
-4. 设置端口（默认8080，你的配置是8085）
-5. 设置用户名和密码
-6. 点击应用并确定
-
-**注意**：程序使用原生JavaScript实现qBittorrent API调用，无需额外依赖包。
-
-### 3. 认证配置
-
-编辑 `env.js` 文件，填入你的M-Team认证信息：
-
-```javascript
-s = "你的密钥";
-authorization = "你的认证token";
-did = "你的设备ID";
-cookie = "你的cookie";
-version = "版本号";
-webVersion = "Web版本号";
-visitorid = "访客ID";
-```
-
-## 使用方法
-
-### 启动程序
-
+### 2. 配置环境变量
 ```bash
-node index.js
-# 或者使用npm脚本
+# 复制环境变量模板
+cp .env.example .env
+
+# 编辑 .env 文件，填入实际值
+# 特别是以下必需配置：
+# - AUTH_TOKEN (认证令牌)
+# - DID (设备ID)
+# - COOKIE (Cookie信息)
+# - VISITOR_ID (访问者ID)
+```
+
+### 3. 验证配置
+```bash
+pnpm validate
+```
+
+### 4. 启动程序
+```bash
 pnpm start
 ```
 
-### 测试qBittorrent连接
+## 📋 配置说明
 
-在正式使用前，建议先测试qBittorrent连接：
+### 必需配置
+- **AUTH_TOKEN**: M-Team 认证令牌
+- **DID**: 设备 ID
+- **COOKIE**: Cookie 信息
+- **VISITOR_ID**: 访问者 ID
+
+### 可选配置
+所有其他配置项都可以通过环境变量自定义，包括：
+- 下载设置（目录、间隔、重试等）
+- 搜索设置（分页、错误处理等）
+- API 设置（请求限制、超时等）
+- qBittorrent 设置（连接、路径、分类等）
+- 日志设置（级别、文件保存等）
+
+详细配置说明请参考：
+- [环境变量设置指南](ENV_SETUP.md)
+- [配置映射说明](CONFIG_MAPPING.md)
+
+## 🔧 可用命令
 
 ```bash
-node test-qb.js
-# 或者使用npm脚本
-pnpm test-qb
+pnpm start          # 启动程序
+pnpm validate       # 验证配置
+pnpm validate:config # 验证配置（别名）
 ```
 
-## 功能说明
+## 📁 项目结构
 
-### 多分类自动处理
+```
+├── api/              # API 相关代码
+├── config/           # 配置文件
+├── lib/              # 核心逻辑
+├── scripts/          # 工具脚本
+├── utils/            # 工具函数
+├── .env.example      # 环境变量模板
+├── ENV_SETUP.md      # 环境变量设置指南
+├── CONFIG_MAPPING.md # 配置映射说明
+└── README.md         # 项目说明
+```
 
-程序会按顺序处理多个分类：
+## 🛡️ 安全特性
 
-1. **自动分类切换**: 按配置的分类列表顺序处理
-2. **大小限制检测**: 发现大于150MB种子时自动切换到下一个分类
-3. **智能跳过**: 当前分类无数据时自动切换到下一个分类
+- 敏感配置通过环境变量管理
+- 认证错误自动检测和程序停止
+- 支持配置验证和检查
+- 详细的错误提示和配置指导
 
-### 自动上传到qBittorrent
+## 📖 更多信息
 
-当种子下载成功后，程序会自动：
+- [环境变量设置指南](ENV_SETUP.md) - 详细的环境变量配置说明
+- [配置映射说明](CONFIG_MAPPING.md) - 环境变量与配置项的对应关系
+- [代码结构说明](CODE_STRUCTURE.md) - 项目代码结构分析
 
-1. 连接到qBittorrent Web UI
-2. 上传种子文件
-3. 设置下载路径为 `/downloads/下载中`
-4. 设置完成后的移动路径为 `/downloads/刷魔力值`
-5. 添加分类 `刷魔力值`
-6. 添加标签 `刷魔力值,待转移`
+## 🤝 贡献
 
-### 配置选项
+欢迎提交 Issue 和 Pull Request！
 
-#### 下载配置
-- `DOWNLOAD.INTERVAL`: 下载间隔（毫秒）
-- `DOWNLOAD.MAX_SIZE`: 最大下载大小
-- `DOWNLOAD.MIN_SIZE`: 最小下载大小
+## �� 许可证
 
-#### 搜索配置
-- `SEARCH.TYPES`: 要处理的分类列表
-- `SEARCH.CURRENT_TYPE_INDEX`: 当前处理的分类索引
-- `SEARCH.PAGE_SIZE`: 每页数量
-- `SEARCH.START_PAGE`: 每个分类的起始页码
-- `SEARCH.PAGE_INTERVAL`: 翻页间隔（毫秒）
-
-#### qBittorrent配置
-- `QBITTORRENT.ENABLED`: 是否启用自动上传功能
-- `QBITTORRENT.BASE_URL`: qBittorrent Web UI地址
-- `QBITTORRENT.USERNAME`: qBittorrent用户名
-- `QBITTORRENT.PASSWORD`: qBittorrent密码
-- `QBITTORRENT.DOWNLOAD_PATH`: 下载时的临时路径
-- `QBITTORRENT.FINAL_PATH`: 完成后的最终保存路径
-- `QBITTORRENT.CATEGORY`: 种子分类
-- `QBITTORRENT.TAGS`: 种子标签（逗号分隔）
-
-## 注意事项
-
-1. 确保qBittorrent正在运行且Web UI已启用
-2. 检查网络连接和防火墙设置
-3. 确保保存路径在qBittorrent中是可写的
-4. 建议在测试环境中先验证配置是否正确
-
-## 故障排除
-
-如果遇到连接问题：
-
-1. 检查qBittorrent Web UI是否正常运行
-2. 验证用户名和密码是否正确
-3. 确认端口是否被防火墙阻止
-4. 检查网络连接是否正常
+ISC License

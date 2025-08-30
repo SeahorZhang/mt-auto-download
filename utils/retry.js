@@ -44,6 +44,11 @@ export class RetryManager {
    * 检查错误是否应该重试
    */
   shouldRetry(error) {
+    // 认证错误不应该重试，直接失败
+    if (error.isAuthError || error.name === "AuthenticationError" || error.code === 401) {
+      return false;
+    }
+    
     // 网络错误、超时、服务器错误等应该重试
     if (error.code === 'ECONNRESET' || 
         error.code === 'ETIMEDOUT' || 

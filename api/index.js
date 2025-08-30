@@ -111,6 +111,18 @@ api.interceptors.response.use(
       } else {
         // 错误响应
         const errorMessage = response.data.message || "API 返回错误";
+        
+        // 特殊处理认证错误
+        if (errorMessage.includes("Full authentication is required") || 
+            errorMessage.includes("authentication") ||
+            code === 401) {
+          const authError = new Error(`认证失败: ${errorMessage}`);
+          authError.name = "AuthenticationError";
+          authError.code = 401;
+          authError.isAuthError = true;
+          throw authError;
+        }
+        
         logger.error(`API Error (${response.data.code}): ${errorMessage}`);
         return Promise.reject(new Error(errorMessage));
       }
@@ -126,7 +138,12 @@ api.interceptors.response.use(
       if (status === 429) {
         logger.error("请求频率过高，服务器限制访问");
       } else if (status === 401) {
-        logger.error("认证失败，请检查token是否有效");
+        // 特殊处理401认证错误
+        const authError = new Error(`认证失败: ${message}`);
+        authError.name = "AuthenticationError";
+        authError.code = 401;
+        authError.isAuthError = true;
+        throw authError;
       } else if (status === 403) {
         logger.error("访问被拒绝，可能被服务器封禁");
       } else {
