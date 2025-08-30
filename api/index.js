@@ -13,7 +13,7 @@ import {
   VERSION,
   WEB_VERSION,
   VISITOR_ID,
-} from "./config.js";
+} from "../config/index.js";
 
 // 你的签名函数
 function genSign(method, url, timestamp) {

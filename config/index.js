@@ -1,3 +1,27 @@
+// 从环境变量读取配置
+export const API_BASE_URL = process.env.API_BASE_URL || "https://api.m-team.cc";
+export const SECRET_KEY = process.env.SECRET_KEY || "HLkPcWmycL57mfJt";
+export const AUTH_TOKEN = process.env.AUTH_TOKEN || "";
+export const DID = process.env.DID || "";
+export const COOKIE = process.env.COOKIE || "";
+export const VERSION = process.env.VERSION || "1.1.4";
+export const WEB_VERSION = process.env.WEB_VERSION || "1140";
+export const VISITOR_ID = process.env.VISITOR_ID || "";
+
+// 验证必要的环境变量
+if (!process.env.AUTH_TOKEN) {
+  console.warn("警告: AUTH_TOKEN 环境变量未设置");
+}
+if (!process.env.DID) {
+  console.warn("警告: DID 环境变量未设置");
+}
+if (!process.env.COOKIE) {
+  console.warn("警告: COOKIE 环境变量未设置");
+}
+if (!process.env.VISITOR_ID) {
+  console.warn("警告: VISITOR_ID 环境变量未设置");
+}
+
 export const CONFIG = {
   DOWNLOAD: {
     DIR: 'torrents',
