@@ -34,8 +34,8 @@ export async function downloadFile(url, dir) {
 
     return new Promise((resolve, reject) => {
       writer.on("finish", () => {
-      logger.success(`✅ 下载完成: ${filename}`);
-        resolve();
+        logger.success(`✅ 下载完成: ${filename}`);
+        resolve(destPath); // 返回下载文件的完整路径
       });
       writer.on("error", (err) => {
         console.error(`写入文件失败: ${destPath}`, err);
@@ -44,6 +44,7 @@ export async function downloadFile(url, dir) {
     });
   } catch (error) {
     console.error(`下载文件失败: ${url}`, error.message);
+    return null;
   }
 }
 

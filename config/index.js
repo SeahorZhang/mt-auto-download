@@ -14,8 +14,17 @@ export const CONFIG = {
     START_PAGE: 22,
     MAX_ERRORS_PER_PAGE: 3 // 每页最大错误次数
   },
+  QBITTORRENT: {
+    ENABLED: true,         // 是否启用qBittorrent自动上传
+    BASE_URL: 'http://192.168.50.100:8085', // qBittorrent Web UI地址
+    USERNAME: 'admin',     // qBittorrent用户名
+    PASSWORD: '188642345',     // qBittorrent密码
+    SAVE_PATH: '/downloads/刷魔力值', // 保存路径
+    CATEGORY: '刷魔力值',   // 分类
+    TAGS: '刷魔力值,待转移' // 标签
+  },
   LOG: {
-    SAVE_TO_FILE: true,    // 是否保存日志到文件
+    SAVE_TO_FILE: false,    // 是否保存日志到文件
     LOG_DIR: 'logs'        // 日志文件目录
   }
 };
