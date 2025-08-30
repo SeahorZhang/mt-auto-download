@@ -35,6 +35,7 @@ export const CONFIG = {
     TYPE: '剧集',              // 搜索类型
     PAGE_SIZE: 100,            // 每页数量
     START_PAGE: 1,             // 起始页码
+    PAGE_INTERVAL: 5 * 1000,   // 翻页间隔（5秒）
   },
   QBITTORRENT: {
     ENABLED: true,             // 是否启用qBittorrent自动上传
@@ -109,6 +110,18 @@ pnpm test-qb
 
 ### 配置选项
 
+#### 下载配置
+- `DOWNLOAD.INTERVAL`: 下载间隔（毫秒）
+- `DOWNLOAD.MAX_SIZE`: 最大下载大小
+- `DOWNLOAD.MIN_SIZE`: 最小下载大小
+
+#### 搜索配置
+- `SEARCH.TYPE`: 搜索类型
+- `SEARCH.PAGE_SIZE`: 每页数量
+- `SEARCH.START_PAGE`: 起始页码
+- `SEARCH.PAGE_INTERVAL`: 翻页间隔（毫秒）
+
+#### qBittorrent配置
 - `QBITTORRENT.ENABLED`: 是否启用自动上传功能
 - `QBITTORRENT.BASE_URL`: qBittorrent Web UI地址
 - `QBITTORRENT.USERNAME`: qBittorrent用户名

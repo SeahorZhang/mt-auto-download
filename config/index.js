@@ -12,7 +12,8 @@ export const CONFIG = {
     TYPE: '剧集', // 综合 电影 记录 剧集 音乐 动漫 体育 软件 游戏 电子书 有声书 教育影片 其他
     PAGE_SIZE: 100,
     START_PAGE: 22,
-    MAX_ERRORS_PER_PAGE: 3 // 每页最大错误次数
+    MAX_ERRORS_PER_PAGE: 3, // 每页最大错误次数
+    PAGE_INTERVAL: 5 * 1000 // 翻页间隔（5秒）
   },
   QBITTORRENT: {
     ENABLED: true,         // 是否启用qBittorrent自动上传
