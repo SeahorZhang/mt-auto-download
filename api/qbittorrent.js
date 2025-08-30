@@ -34,22 +34,6 @@ export class QBittorrentAPI {
     }
   }
 
-  // --- 内部：过滤会覆盖路径的参数 ---
-  sanitizeOptions(options = {}) {
-    // 移除了 category 和 tags 在 forbidden set 中，因为现在它们是允许的
-    const forbidden = new Set(['savepath', 'save_path', 'savePath', 'savePath=', 'save_path=']);
-    const out = {};
-    Object.entries(options).forEach(([k, v]) => {
-      if (forbidden.has(k)) return;
-      // 过滤掉空字符串
-      if (v === undefined || v === null) return;
-      out[k] = v;
-    });
-    // 如果全局禁用 category，则删除 (虽然我们现在默认开启，但保留此逻辑以防万一)
-    if (!this.config.USE_CATEGORY) delete out.category;
-    return out;
-  }
-
   async connect() {
     try {
       const loginData = new URLSearchParams();
@@ -108,6 +92,7 @@ export class QBittorrentAPI {
       const preferencesData = new URLSearchParams({
         json: JSON.stringify(prefs)
       });
+      logger.info(`🔧 发送给 qBittorrent 的全局偏好: ${JSON.stringify(prefs)}`);
 
       const response = await axios.post(`${this.baseUrl}/api/v2/app/setPreferences`, preferencesData, {
         headers: {
@@ -130,8 +115,8 @@ export class QBittorrentAPI {
     }
   }
 
-  // 添加 .torrent 文件（不传 savepath，默认启用 autoTMM）
-  async addTorrentFile(torrentPath, options = {}) {
+  // 添加 .torrent 文件
+  async addTorrentFile(torrentPath) {
     if (!this.isConnected) {
       const connected = await this.connect();
       if (!connected) return false;
@@ -146,20 +131,37 @@ export class QBittorrentAPI {
       const formData = new FormData();
       formData.append('torrents', fs.createReadStream(torrentPath));
 
-      // 基本选项：始终启用 autoTMM；category 仅在 USE_CATEGORY=true 时添加
-      const baseOptions = { autoTMM: 'true' };
-      if (this.config.USE_CATEGORY && this.config.CATEGORY) baseOptions.category = this.config.CATEGORY;
-      if (this.config.TAGS) baseOptions.tags = this.config.TAGS;
+      formData.append('addToTopOfQueue', 'false');
+      formData.append('autoTMM', 'false');
+      formData.append('contentLayout', 'Original');
+      formData.append('downloadPath', this.config.DOWNLOAD_PATH);
+      formData.append('firstLastPiecePrio', 'false');
+      formData.append('paused', 'false');
+      formData.append('stopped', 'false');
+      formData.append('savepath', this.config.DOWNLOAD_PATH);
+      formData.append('sequentialDownload', 'false');
+      formData.append('skip_checking', 'false');
+      formData.append('stopCondition', 'None');
+      formData.append('useDownloadPath', 'true');
 
-      const merged = { ...baseOptions, ...options };
-      const safe = this.sanitizeOptions(merged);
-
-      Object.entries(safe).forEach(([k, v]) => {
-        formData.append(k, String(v));
-      });
+      if (this.config.USE_CATEGORY && this.config.CATEGORY) formData.append('category', this.config.CATEGORY);
+      if (this.config.TAGS) formData.append('tags', this.config.TAGS);
 
       logger.info('🔧 添加种子 FormData 参数:');
-      Object.keys(safe).forEach(k => logger.info(`  • ${k}`));
+      logger.info(`  • addToTopOfQueue: false`);
+      logger.info(`  • autoTMM: false`);
+      logger.info(`  • contentLayout: Original`);
+      logger.info(`  • downloadPath: ${this.config.DOWNLOAD_PATH}`);
+      logger.info(`  • firstLastPiecePrio: false`);
+      logger.info(`  • paused: false`);
+      logger.info(`  • stopped: false`);
+      logger.info(`  • savepath: ${this.config.DOWNLOAD_PATH}`);
+      logger.info(`  • sequentialDownload: false`);
+      logger.info(`  • skip_checking: false`);
+      logger.info(`  • stopCondition: None`);
+      logger.info(`  • useDownloadPath: true`);
+      if (this.config.USE_CATEGORY && this.config.CATEGORY) logger.info(`  • category: ${this.config.CATEGORY}`);
+      if (this.config.TAGS) logger.info(`  • tags: ${this.config.TAGS}`);
 
       const response = await axios.post(`${this.baseUrl}/api/v2/torrents/add`, formData, {
         headers: { ...formData.getHeaders(), 'Cookie': this.cookie },
@@ -180,8 +182,8 @@ export class QBittorrentAPI {
     }
   }
 
-  // 添加磁力链接（同上）
-  async addMagnet(magnet, options = {}) {
+  // 添加磁力链接
+  async addMagnet(magnet) {
     if (!this.isConnected) {
       const connected = await this.connect();
       if (!connected) return false;
@@ -190,17 +192,38 @@ export class QBittorrentAPI {
     try {
       const params = new URLSearchParams();
       params.append('urls', magnet);
-      params.append('autoTMM', 'true');
+      params.append('addToTopOfQueue', 'false');
+      params.append('autoTMM', 'false');
+      params.append('contentLayout', 'Original');
+      params.append('downloadPath', this.config.DOWNLOAD_PATH);
+      params.append('firstLastPiecePrio', 'false');
+      params.append('paused', 'false');
+      params.append('stopped', 'false');
+      params.append('savepath', this.config.DOWNLOAD_PATH);
+      params.append('sequentialDownload', 'false');
+      params.append('skip_checking', 'false');
+      params.append('stopCondition', 'None');
+      params.append('useDownloadPath', 'true');
 
-      // 仅在允许时附加 category / tags
       if (this.config.USE_CATEGORY && this.config.CATEGORY) params.append('category', this.config.CATEGORY);
       if (this.config.TAGS) params.append('tags', this.config.TAGS);
 
-      const safeOptions = this.sanitizeOptions(options);
-      Object.entries(safeOptions).forEach(([k, v]) => params.append(k, String(v)));
-
       logger.info('🔧 添加磁力 参数:');
-      Array.from(params.keys()).forEach(k => logger.info(`  • ${k}`));
+      logger.info(`  • urls: ${magnet}`);
+      logger.info(`  • addToTopOfQueue: false`);
+      logger.info(`  • autoTMM: false`);
+      logger.info(`  • contentLayout: Original`);
+      logger.info(`  • downloadPath: ${this.config.DOWNLOAD_PATH}`);
+      logger.info(`  • firstLastPiecePrio: false`);
+      logger.info(`  • paused: false`);
+      logger.info(`  • stopped: false`);
+      logger.info(`  • savepath: ${this.config.DOWNLOAD_PATH}`);
+      logger.info(`  • sequentialDownload: false`);
+      logger.info(`  • skip_checking: false`);
+      logger.info(`  • stopCondition: None`);
+      logger.info(`  • useDownloadPath: true`);
+      if (this.config.USE_CATEGORY && this.config.CATEGORY) logger.info(`  • category: ${this.config.CATEGORY}`);
+      if (this.config.TAGS) logger.info(`  • tags: ${this.config.TAGS}`);
 
       const response = await axios.post(`${this.baseUrl}/api/v2/torrents/add`, params, {
         headers: { 'Cookie': this.cookie },
