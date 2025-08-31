@@ -14,7 +14,7 @@ import { validateRequiredEnvVars } from "./config/index.js";
 validateRequiredEnvVars();
 
 async function main() {
-  intro(pc.cyan("MT Auto Download"));
+  intro(pc.cyan("MT 自动下载种子脚本"));
 
   const categories = [
     "全部顺序执行",
@@ -52,11 +52,11 @@ async function main() {
   const startPage = startPageInput ? Number(startPageInput) : 1;
 
   if (chosenType === "全部顺序执行") {
-    const runCategories = categories.filter((c) => c !== "全部顺序执行");
+  const runCategories = categories.filter((c) => c !== "全部顺序执行");
     for (let i = 0; i < runCategories.length; i++) {
-      const t = runCategories[i];
-      const effectiveStartPage = i === 0 ? startPage : 1;
-      const app = new App({ startPage: effectiveStartPage, type: t });
+    const t = runCategories[i];
+    const effectiveStartPage = i === 0 ? startPage : 1;
+    const app = new App({ startPage: effectiveStartPage, type: t });
       const result = await app.start();
       
       // 检查是否为认证错误导致的停止
@@ -69,7 +69,7 @@ async function main() {
   } else {
     const app = new App({ startPage, type: chosenType });
     const result = await app.start();
-    
+
     // 检查是否为认证错误导致的停止
     if (result && result.stopImmediately && !result.gracefulExit) {
       logger.error("🚨 程序因认证错误而停止");

@@ -57,14 +57,6 @@ export class QBittorrentAPI {
     return params;
   }
 
-  // 记录种子参数日志
-  _logTorrentParams(params, type = "种子") {
-    logger.info(`🔧 添加${type}参数:`);
-    Object.entries(params).forEach(([key, value]) => {
-      logger.info(`  • ${key}: ${value}`);
-    });
-  }
-
   async connect() {
     try {
       const loginData = new URLSearchParams({
@@ -173,8 +165,6 @@ export class QBittorrentAPI {
         formData.append(key, value);
       });
 
-      this._logTorrentParams(params, "种子");
-
       const response = await axios.post(
         `${this.baseUrl}/api/v2/torrents/add`,
         formData,
@@ -195,69 +185,6 @@ export class QBittorrentAPI {
     } catch (error) {
       logger.error(`❌ 添加种子失败: ${error.message}`);
       return false;
-    }
-  }
-
-  // 添加磁力链接
-  async addMagnet(magnet) {
-    if (!this.isConnected && !(await this.connect())) {
-      return false;
-    }
-
-    try {
-      const params = new URLSearchParams();
-      params.append("urls", magnet);
-
-      const defaultParams = this._getDefaultTorrentParams();
-      Object.entries(defaultParams).forEach(([key, value]) => {
-        params.append(key, value);
-      });
-
-      this._logTorrentParams({ urls: magnet, ...defaultParams }, "磁力");
-
-      const response = await axios.post(
-        `${this.baseUrl}/api/v2/torrents/add`,
-        params,
-        {
-          headers: { Cookie: this.cookie },
-          timeout: 30000,
-          validateStatus: (status) => status < 500,
-        }
-      );
-
-      if (response.status === 200) {
-        logger.success("✅ 磁力链接已成功添加");
-        return true;
-      } else {
-        logger.error(`❌ 添加磁力失败，状态码: ${response.status}`);
-        return false;
-      }
-    } catch (error) {
-      logger.error(`❌ 添加磁力失败: ${error.message}`);
-      return false;
-    }
-  }
-
-  async getTorrents() {
-    if (!this.isConnected && !(await this.connect())) {
-      return [];
-    }
-
-    try {
-      const response = await axios.get(`${this.baseUrl}/api/v2/torrents/info`, {
-        headers: { Cookie: this.cookie },
-        timeout: 10000,
-      });
-
-      if (response.status === 200) {
-        return response.data;
-      } else {
-        logger.error(`❌ 获取种子列表失败，状态码: ${response.status}`);
-        return [];
-      }
-    } catch (error) {
-      logger.error(`❌ 获取种子列表失败: ${error.message}`);
-      return [];
     }
   }
 

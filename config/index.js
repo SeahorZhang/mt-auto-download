@@ -410,27 +410,19 @@ export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
  */
 export function validateRequiredEnvVars() {
   if (!process.env.AUTH_TOKEN) {
-    console.warn("⚠️  警告: AUTH_TOKEN 环境变量未设置");
-    console.warn("   说明: 认证令牌是必需的，程序可能无法正常运行");
-    console.warn("   解决: 请在 .env 文件中设置 AUTH_TOKEN");
+    console.warn("⚠️  警告: AUTH_TOKEN 环境变量未设置，请在 .env 文件中设置");
   }
 
   if (!process.env.DID) {
-    console.warn("⚠️  警告: DID 环境变量未设置");
-    console.warn("   说明: 设备ID是必需的，程序可能无法正常运行");
-    console.warn("   解决: 请在 .env 文件中设置 DID");
+    console.warn("⚠️  警告: DID 环境变量未设置，请在 .env 文件中设置");
   }
 
   if (!process.env.COOKIE) {
-    console.warn("⚠️  警告: COOKIE 环境变量未设置");
-    console.warn("   说明: Cookie信息是必需的，程序可能无法正常运行");
-    console.warn("   解决: 请在 .env 文件中设置 COOKIE");
+    console.warn("⚠️  警告: COOKIE 环境变量未设置，请在 .env 文件中设置");
   }
 
   if (!process.env.VISITOR_ID) {
-    console.warn("⚠️  警告: VISITOR_ID 环境变量未设置");
-    console.warn("   说明: 访问者ID是必需的，程序可能无法正常运行");
-    console.warn("   解决: 请在 .env 文件中设置 VISITOR_ID");
+    console.warn("⚠️  警告: VISITOR_ID 环境变量未设置，请在 .env 文件中设置");
   }
 }
 
