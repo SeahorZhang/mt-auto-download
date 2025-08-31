@@ -1,11 +1,17 @@
 import dotenv from "dotenv";
+
+// 首先加载环境变量
+dotenv.config();
+
+// 然后导入其他模块
 import { App } from "./lib/App.js";
 import { logger } from "./utils/index.js";
 import { intro, outro, select, text } from "@clack/prompts";
 import pc from "picocolors";
+import { validateRequiredEnvVars } from "./config/index.js";
 
-// 加载环境变量
-dotenv.config();
+// 验证必需的环境变量
+validateRequiredEnvVars();
 
 async function main() {
   intro(pc.cyan("MT Auto Download"));

@@ -38,15 +38,18 @@ export const SECRET_KEY = process.env.SECRET_KEY || "HLkPcWmycL57mfJt";
  * 获取方式：登录 M-Team 后从浏览器开发者工具中获取
  * 有效期：通常为 30 天，过期需要重新获取
  */
-export const AUTH_TOKEN = process.env.AUTH_TOKEN || "";
-
+export function getAuthToken() {
+  return process.env.AUTH_TOKEN || "";
+}
 /**
  * 设备 ID (必需)
  * 用于标识当前设备，防止多设备同时登录
  * 格式：32 位十六进制字符串
  * 获取方式：登录 M-Team 后从请求头中获取
  */
-export const DID = process.env.DID || "";
+export function getDid() {
+  return process.env.DID || "";
+}
 
 /**
  * Cookie 信息 (必需)
@@ -55,7 +58,9 @@ export const DID = process.env.DID || "";
  * 获取方式：登录 M-Team 后从浏览器开发者工具中复制
  * 注意：包含敏感信息，请妥善保管
  */
-export const COOKIE = process.env.COOKIE || "";
+export function getCookie() {
+  return process.env.COOKIE || "";
+}
 
 /**
  * 客户端版本号
@@ -77,7 +82,9 @@ export const WEB_VERSION = process.env.WEB_VERSION || "1140";
  * 格式：32 位十六进制字符串
  * 获取方式：登录 M-Team 后从请求头中获取
  */
-export const VISITOR_ID = process.env.VISITOR_ID || "";
+export function getVisitorId() {
+  return process.env.VISITOR_ID || "";
+}
 
 // ============================================================================
 // 📥 下载配置 - 种子下载行为控制
@@ -401,29 +408,30 @@ export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
  * 如果必需配置未设置，程序会显示警告信息
  * 注意：这些配置项是程序正常运行所必需的
  */
+export function validateRequiredEnvVars() {
+  if (!process.env.AUTH_TOKEN) {
+    console.warn("⚠️  警告: AUTH_TOKEN 环境变量未设置");
+    console.warn("   说明: 认证令牌是必需的，程序可能无法正常运行");
+    console.warn("   解决: 请在 .env 文件中设置 AUTH_TOKEN");
+  }
 
-if (!process.env.AUTH_TOKEN) {
-  console.warn("⚠️  警告: AUTH_TOKEN 环境变量未设置");
-  console.warn("   说明: 认证令牌是必需的，程序可能无法正常运行");
-  console.warn("   解决: 请在 .env 文件中设置 AUTH_TOKEN");
-}
+  if (!process.env.DID) {
+    console.warn("⚠️  警告: DID 环境变量未设置");
+    console.warn("   说明: 设备ID是必需的，程序可能无法正常运行");
+    console.warn("   解决: 请在 .env 文件中设置 DID");
+  }
 
-if (!process.env.DID) {
-  console.warn("⚠️  警告: DID 环境变量未设置");
-  console.warn("   说明: 设备ID是必需的，程序可能无法正常运行");
-  console.warn("   解决: 请在 .env 文件中设置 DID");
-}
+  if (!process.env.COOKIE) {
+    console.warn("⚠️  警告: COOKIE 环境变量未设置");
+    console.warn("   说明: Cookie信息是必需的，程序可能无法正常运行");
+    console.warn("   解决: 请在 .env 文件中设置 COOKIE");
+  }
 
-if (!process.env.COOKIE) {
-  console.warn("⚠️  警告: COOKIE 环境变量未设置");
-  console.warn("   说明: Cookie信息是必需的，程序可能无法正常运行");
-  console.warn("   解决: 请在 .env 文件中设置 COOKIE");
-}
-
-if (!process.env.VISITOR_ID) {
-  console.warn("⚠️  警告: VISITOR_ID 环境变量未设置");
-  console.warn("   说明: 访问者ID是必需的，程序可能无法正常运行");
-  console.warn("   解决: 请在 .env 文件中设置 VISITOR_ID");
+  if (!process.env.VISITOR_ID) {
+    console.warn("⚠️  警告: VISITOR_ID 环境变量未设置");
+    console.warn("   说明: 访问者ID是必需的，程序可能无法正常运行");
+    console.warn("   解决: 请在 .env 文件中设置 VISITOR_ID");
+  }
 }
 
 // ============================================================================

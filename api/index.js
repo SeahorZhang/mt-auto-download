@@ -7,12 +7,12 @@ import { logger } from "../utils/index.js";
 import {
   API_BASE_URL,
   SECRET_KEY,
-  AUTH_TOKEN,
-  DID,
-  COOKIE,
+  getAuthToken,
+  getDid,
+  getCookie,
   VERSION,
   WEB_VERSION,
-  VISITOR_ID,
+  getVisitorId,
 } from "../config/index.js";
 
 // 你的签名函数
@@ -39,7 +39,7 @@ function handlePostData(data, url, headers = {}) {
 
     return { data, headers };
   }
-
+  
   // 🔹 x-www-form-urlencoded
   const contentType = headers["Content-Type"] || headers["content-type"] || "";
   if (contentType.includes("application/x-www-form-urlencoded")) {
@@ -53,20 +53,13 @@ function handlePostData(data, url, headers = {}) {
   const obj = data || {};
   obj._timestamp = _timestamp;
   obj._sgin = _sgin;
+
   return { data: obj, headers };
 }
 
 // 创建 Axios 实例
 const api = axios.create({
   baseURL: API_BASE_URL, // 使用绝对路径
-  headers: {
-    authorization: AUTH_TOKEN,
-    did: DID,
-    cookie: COOKIE,
-    version: VERSION,
-    webVersion: WEB_VERSION,
-    visitorid: VISITOR_ID,
-  },
 });
 
 // 请求拦截器
@@ -75,7 +68,18 @@ api.interceptors.request.use(
     // 请求频率控制
     await globalRateLimiter.waitForNextSlot();
     globalRateLimiter.recordRequest();
-    
+
+    // 动态设置认证头
+    config.headers = {
+      ...config.headers,
+      authorization: getAuthToken(),
+      did: getDid(),
+      cookie: getCookie(),
+      version: VERSION,
+      webVersion: WEB_VERSION,
+      visitorid: getVisitorId(),
+    };
+
     const method = (config.method || "GET").toUpperCase();
 
     if (method === "POST") {
@@ -111,18 +115,20 @@ api.interceptors.response.use(
       } else {
         // 错误响应
         const errorMessage = response.data.message || "API 返回错误";
-        
+
         // 特殊处理认证错误
-        if (errorMessage.includes("Full authentication is required") || 
-            errorMessage.includes("authentication") ||
-            code === 401) {
+        if (
+          errorMessage.includes("Full authentication is required") ||
+          errorMessage.includes("authentication") ||
+          code === 401
+        ) {
           const authError = new Error(`认证失败: ${errorMessage}`);
           authError.name = "AuthenticationError";
           authError.code = 401;
           authError.isAuthError = true;
           throw authError;
         }
-        
+
         logger.error(`API Error (${response.data.code}): ${errorMessage}`);
         return Promise.reject(new Error(errorMessage));
       }
@@ -134,7 +140,7 @@ api.interceptors.response.use(
     if (error.response) {
       const status = error.response.status;
       const message = error.response.data?.message || "请求失败";
-      
+
       if (status === 429) {
         logger.error("请求频率过高，服务器限制访问");
       } else if (status === 401) {
@@ -154,7 +160,7 @@ api.interceptors.response.use(
     } else {
       logger.error(`请求错误: ${error.message}`);
     }
-    
+
     return Promise.reject(error);
   }
 );
