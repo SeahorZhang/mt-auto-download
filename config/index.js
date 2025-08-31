@@ -461,10 +461,9 @@ export const CONFIG = {
    * 控制种子的搜索和分页行为
    */
   SEARCH: {
-    // 支持的种子分类列表
+    // 支持的种子分类列表（统一命名为 CATEGORIES）
     // 程序会按顺序处理这些分类
-    TYPES: ['剧集', '电影', '动漫', '音乐', '软件', '游戏', '电子书', '有声书', '教育影片', '记录', '体育', '其他'],
-    CURRENT_TYPE_INDEX: 0,                       // 当前处理的分类索引
+    CATEGORIES: ['剧集', '电影', '动漫', '音乐', '软件', '游戏', '电子书', '有声书', '教育影片', '记录', '体育', '其他'],
     PAGE_SIZE: SEARCH_PAGE_SIZE,                 // 每页大小
     START_PAGE: SEARCH_START_PAGE,               // 起始页码
     MAX_ERRORS_PER_PAGE: SEARCH_MAX_ERRORS_PER_PAGE, // 每页最大错误次数

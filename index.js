@@ -8,7 +8,7 @@ import { App } from "./lib/App.js";
 import { logger } from "./utils/index.js";
 import { intro, outro, select, text } from "@clack/prompts";
 import pc from "picocolors";
-import { validateRequiredEnvVars } from "./config/index.js";
+import { validateRequiredEnvVars, CONFIG } from "./config/index.js";
 
 // 验证必需的环境变量
 validateRequiredEnvVars();
@@ -16,21 +16,11 @@ validateRequiredEnvVars();
 async function main() {
   intro(pc.cyan("MT 自动下载种子脚本"));
 
+  // 使用配置文件中的分类列表，并添加"全部顺序执行"和"综合"选项
   const categories = [
     "全部顺序执行",
     "综合",
-    "电影",
-    "记录",
-    "剧集",
-    "音乐",
-    "动漫",
-    "体育",
-    "软件",
-    "游戏",
-    "电子书",
-    "有声书",
-    "教育影片",
-    "其他",
+    ...CONFIG.SEARCH.CATEGORIES
   ];
 
   const chosenType = await select({

@@ -6,19 +6,15 @@ import pc from "picocolors";
  * @param {boolean} gracefulExit - 是否为优雅退出模式
  * @returns {Promise<void>}
  */
-export const waitWithCountdown = (seconds, gracefulExit = false) => {
+export const waitWithCountdown = (seconds, { searchType, pageNumber }) => {
   return new Promise((resolve) => {
     let remaining = seconds;
     const intervalId = setInterval(() => {
-      if (gracefulExit) {
-        process.stdout.write(
-          pc.yellow("收到退出信号，等待当前任务完成... ") +
-            pc.gray(`⏳ ${remaining} 秒`) +
-            "   \r"
-        );
-      } else {
-        process.stdout.write(pc.gray(`⏳ 等待 ${remaining} 秒... \r`));
-      }
+      process.stdout.write(
+        pc.gray(
+          `[${searchType}]⏳ 等待 ${remaining} 秒进入第 ${pageNumber} 页... \r`
+        )
+      );
 
       remaining--;
       if (remaining < 0) {
