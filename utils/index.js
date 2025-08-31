@@ -4,11 +4,34 @@ import path from "path";
 import fs from "fs";
 import pc from "picocolors";
 
+/**
+ * 日志工具
+ * 提供彩色控制台输出功能
+ */
+export const logger = {
+  info: (msg) => console.log(pc.blue(msg)),
+  success: (msg) => console.log(pc.green(msg)),
+  warn: (msg) => console.log(pc.yellow(msg)),
+  error: (msg) => console.error(pc.red(msg)),
+  log: (msg) => console.log(msg),
+};
+
+/**
+ * HMAC-SHA1 签名函数
+ * @param {string} message - 要签名的消息
+ * @param {string} key - 签名密钥
+ * @returns {string} base64编码的签名
+ */
 export function hmacSHA1(message, key) {
   return createHmac("sha1", key).update(message).digest("base64");
 }
 
-// node 下载文件
+/**
+ * 下载文件到指定目录
+ * @param {string} url - 文件下载地址
+ * @param {string} dir - 保存目录
+ * @returns {Promise<string|null>} 下载文件路径或null
+ */
 export async function downloadFile(url, dir) {
   try {
     const response = await axios({
@@ -16,7 +39,6 @@ export async function downloadFile(url, dir) {
       method: "GET",
       responseType: "stream",
       timeout: 30000, // 30秒超时
-      // 请求头，让服务器知道我们接受的编码
       headers: {
         "Accept-Charset": "utf-8, gbk;q=0.9, *;q=0.8",
       },
@@ -54,7 +76,7 @@ export async function downloadFile(url, dir) {
       writer.on("finish", () => {
         clearTimeout(timeout);
         logger.success(`✅ 下载完成: ${filename}`);
-        resolve(destPath); // 返回下载文件的完整路径
+        resolve(destPath);
       });
       
       writer.on("error", (err) => {
@@ -81,17 +103,14 @@ export async function downloadFile(url, dir) {
   }
 }
 
+/**
+ * 格式化字节数为可读格式
+ * @param {number} bytes - 字节数
+ * @param {number} decimals - 小数位数
+ * @returns {string} 格式化后的字符串
+ */
 export function formatBytes(bytes, decimals = 2) {
   if (bytes === 0) return "0 MB";
   const mb = bytes / 1024 / 1024;
   return `${mb.toFixed(decimals)} MB`;
 }
-
-
-export const logger = {
-  info: (msg) => console.log(pc.blue(msg)),
-  success: (msg) => console.log(pc.green(msg)),
-  warn: (msg) => console.log(pc.yellow(msg)),
-  error: (msg) => console.error(pc.red(msg)),
-  log: (msg) => console.log(msg),
-};

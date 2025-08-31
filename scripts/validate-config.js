@@ -5,31 +5,20 @@
  * 用于检查环境变量配置是否正确
  */
 
-import { logger } from "../utils/index.js";
-import {
-  API_BASE_URL,
-  SECRET_KEY,
-  AUTH_TOKEN,
-  DID,
-  COOKIE,
-  VERSION,
-  WEB_VERSION,
-  VISITOR_ID,
-  DOWNLOAD_DIR,
-  QB_ENABLED,
-  QB_BASE_URL,
-  QB_USERNAME,
-  QB_PASSWORD
-} from "../config/index.js";
+import dotenv from "dotenv";
+import pc from "picocolors";
+
+// 加载环境变量
+dotenv.config();
 
 console.log("🔍 配置验证开始...\n");
 
 // 检查必需配置
 const requiredConfigs = [
-  { name: "AUTH_TOKEN", value: AUTH_TOKEN, description: "认证令牌" },
-  { name: "DID", value: DID, description: "设备ID" },
-  { name: "COOKIE", value: COOKIE, description: "Cookie信息" },
-  { name: "VISITOR_ID", value: VISITOR_ID, description: "访问者ID" }
+  { name: "AUTH_TOKEN", value: process.env.AUTH_TOKEN, description: "认证令牌" },
+  { name: "DID", value: process.env.DID, description: "设备ID" },
+  { name: "COOKIE", value: process.env.COOKIE, description: "Cookie信息" },
+  { name: "VISITOR_ID", value: process.env.VISITOR_ID, description: "访问者ID" }
 ];
 
 console.log("📋 必需配置检查:");
@@ -49,15 +38,15 @@ console.log();
 // 检查可选配置
 console.log("📋 可选配置检查:");
 const optionalConfigs = [
-  { name: "API_BASE_URL", value: API_BASE_URL, description: "API基础URL" },
-  { name: "SECRET_KEY", value: SECRET_KEY, description: "签名密钥" },
-  { name: "VERSION", value: VERSION, description: "版本号" },
-  { name: "WEB_VERSION", value: WEB_VERSION, description: "Web版本" },
-  { name: "DOWNLOAD_DIR", value: DOWNLOAD_DIR, description: "下载目录" },
-  { name: "QB_ENABLED", value: QB_ENABLED, description: "qBittorrent启用状态" },
-  { name: "QB_BASE_URL", value: QB_BASE_URL, description: "qBittorrent地址" },
-  { name: "QB_USERNAME", value: QB_USERNAME, description: "qBittorrent用户名" },
-  { name: "QB_PASSWORD", value: QB_PASSWORD, description: "qBittorrent密码" }
+  { name: "API_BASE_URL", value: process.env.API_BASE_URL || "https://api.m-team.cc", description: "API基础URL" },
+  { name: "SECRET_KEY", value: process.env.SECRET_KEY || "HLkPcWmycL57mfJt", description: "签名密钥" },
+  { name: "VERSION", value: process.env.VERSION || "1.1.4", description: "版本号" },
+  { name: "WEB_VERSION", value: process.env.WEB_VERSION || "1140", description: "Web版本" },
+  { name: "DOWNLOAD_DIR", value: process.env.DOWNLOAD_DIR || "torrents", description: "下载目录" },
+  { name: "QB_ENABLED", value: process.env.QB_ENABLED || "true", description: "qBittorrent启用状态" },
+  { name: "QB_BASE_URL", value: process.env.QB_BASE_URL || "http://192.168.50.100:8085", description: "qBittorrent地址" },
+  { name: "QB_USERNAME", value: process.env.QB_USERNAME || "admin", description: "qBittorrent用户名" },
+  { name: "QB_PASSWORD", value: process.env.QB_PASSWORD || "188642345", description: "qBittorrent密码" }
 ];
 
 optionalConfigs.forEach(config => {

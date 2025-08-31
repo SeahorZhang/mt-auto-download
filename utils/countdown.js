@@ -1,10 +1,15 @@
 import pc from "picocolors";
 
-export const waitWithCountdown = (seconds) => {
+/**
+ * 带倒计时的等待函数
+ * @param {number} seconds - 等待秒数
+ * @param {boolean} gracefulExit - 是否为优雅退出模式
+ * @returns {Promise<void>}
+ */
+export const waitWithCountdown = (seconds, gracefulExit = false) => {
   return new Promise((resolve) => {
     let remaining = seconds;
     const intervalId = setInterval(() => {
-      let gracefulExit = false; // 从全局获取
       if (gracefulExit) {
         process.stdout.write(
           pc.yellow("收到退出信号，等待当前任务完成... ") +

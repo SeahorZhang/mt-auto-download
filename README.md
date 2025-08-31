@@ -29,7 +29,11 @@ pnpm validate
 
 ### 4. 启动程序
 ```bash
+# 直接启动（不验证配置）
 pnpm start
+
+# 安全启动（先验证配置）
+pnpm start:safe
 ```
 
 ## 📋 配置说明
@@ -42,22 +46,20 @@ pnpm start
 
 ### 可选配置
 所有其他配置项都可以通过环境变量自定义，包括：
-- 下载设置（目录、间隔、重试等）
+- 下载设置（目录、间隔、重试、文件大小限制等）
 - 搜索设置（分页、错误处理等）
 - API 设置（请求限制、超时等）
 - qBittorrent 设置（连接、路径、分类等）
 - 日志设置（级别、文件保存等）
 
-详细配置说明请参考：
-- [环境变量设置指南](ENV_SETUP.md)
-- [配置映射说明](CONFIG_MAPPING.md)
+**详细配置说明请参考：[配置指南](CONFIG_GUIDE.md)**
 
 ## 🔧 可用命令
 
 ```bash
 pnpm start          # 启动程序
+pnpm start:safe     # 安全启动（先验证配置）
 pnpm validate       # 验证配置
-pnpm validate:config # 验证配置（别名）
 ```
 
 ## 📁 项目结构
@@ -69,8 +71,7 @@ pnpm validate:config # 验证配置（别名）
 ├── scripts/          # 工具脚本
 ├── utils/            # 工具函数
 ├── .env.example      # 环境变量模板
-├── ENV_SETUP.md      # 环境变量设置指南
-├── CONFIG_MAPPING.md # 配置映射说明
+├── CONFIG_GUIDE.md   # 完整配置指南
 └── README.md         # 项目说明
 ```
 
@@ -83,9 +84,8 @@ pnpm validate:config # 验证配置（别名）
 
 ## 📖 更多信息
 
-- [环境变量设置指南](ENV_SETUP.md) - 详细的环境变量配置说明
-- [配置映射说明](CONFIG_MAPPING.md) - 环境变量与配置项的对应关系
-- [代码结构说明](CODE_STRUCTURE.md) - 项目代码结构分析
+- **[配置指南](CONFIG_GUIDE.md)** - 完整的配置说明和使用指南
+- **[代码结构说明](CODE_STRUCTURE.md)** - 项目代码结构分析
 
 ## 🤝 贡献
 
