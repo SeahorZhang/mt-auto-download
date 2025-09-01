@@ -79,9 +79,9 @@ export async function downloadFile(url, dir, options = {}) {
       writer.on("finish", () => {
         clearTimeout(timeout);
         const context = options.searchType && options.pageNumber
-          ? `[${options.searchType}：第${options.pageNumber}页]`
+          ? `[${options.searchType}：第${options.pageNumber}页] `
           : '';
-        logger.success(`${context} ✅ 下载完成: ${filename}`);
+        logger.success(`${context}✅ 下载完成: ${filename}`);
         resolve(destPath);
       });
 

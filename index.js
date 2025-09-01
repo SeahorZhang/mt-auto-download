@@ -53,6 +53,16 @@ async function main() {
 
   const startPage = startPageInput ? Number(startPageInput) : 1;
 
+  // 处理认证错误检查的通用函数
+  const handleAuthError = (result) => {
+    if (result && result.stopImmediately && !result.gracefulExit) {
+      logger.error("🚨 程序因认证错误而停止");
+      outro(pc.red("程序因认证错误而停止，请检查配置"));
+      return true;
+    }
+    return false;
+  };
+
   if (chosenType === "全部顺序执行") {
     const runCategories = categories.filter((c) => c !== "全部顺序执行");
     for (let i = 0; i < runCategories.length; i++) {
@@ -61,23 +71,13 @@ async function main() {
       const app = createApp({ startPage: effectiveStartPage, type: t });
       const result = await app.start();
       
-      // 检查是否为认证错误导致的停止
-      if (result && result.stopImmediately && !result.gracefulExit) {
-        logger.error("🚨 程序因认证错误而停止");
-        outro(pc.red("程序因认证错误而停止，请检查配置"));
-        return;
-      }
+      if (handleAuthError(result)) return;
     }
   } else {
     const app = createApp({ startPage, type: chosenType });
     const result = await app.start();
 
-    // 检查是否为认证错误导致的停止
-    if (result && result.stopImmediately && !result.gracefulExit) {
-      logger.error("🚨 程序因认证错误而停止");
-      outro(pc.red("程序因认证错误而停止，请检查配置"));
-      return;
-    }
+    if (handleAuthError(result)) return;
   }
 
   outro(pc.green("任务完成"));

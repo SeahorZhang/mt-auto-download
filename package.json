@@ -7,8 +7,7 @@
   "scripts": {
     "start": "pnpm validate && node index.js",
     "validate": "node scripts/validate-config.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "update-to-functional": "node scripts/update-to-functional.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": ["m-team", "torrent", "download", "automation", "qbittorrent"],
   "author": "MT Auto Download Team",
