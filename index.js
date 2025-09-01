@@ -29,6 +29,12 @@ async function main() {
     initialValue: "全部顺序执行",
   });
 
+  // 检查是否按下了 Ctrl+C
+  if (typeof chosenType === 'symbol') {
+    outro(pc.yellow("👋 已取消操作"));
+    process.exit(0);
+  }
+
   const startPageInput = await text({
     message: "请输入开始页码（默认 1）",
     initialValue: "1",
@@ -38,6 +44,12 @@ async function main() {
       if (!Number.isInteger(n) || n <= 0) return "请输入正整数";
     },
   });
+
+  // 再次检查是否按下了 Ctrl+C
+  if (typeof startPageInput === 'symbol') {
+    outro(pc.yellow("👋 已取消操作"));
+    process.exit(0);
+  }
 
   const startPage = startPageInput ? Number(startPageInput) : 1;
 
@@ -72,5 +84,13 @@ async function main() {
 }
 
 main().catch((err) => {
-  logger.error(`脚本执行时发生未捕获的错误: ${err}`);
+  if (err.code === 'SIGINT' || err.message?.includes('user force quit')) {
+    outro(pc.yellow("👋 程序已退出"));
+    process.exit(0);
+  } else {
+    logger.error("程序运行时发生错误:");
+    logger.error(err);
+    outro(pc.red("程序异常退出，请检查错误信息"));
+    process.exit(1);
+  }
 });

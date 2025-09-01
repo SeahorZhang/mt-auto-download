@@ -210,14 +210,7 @@ export const SEARCH_MAX_ERRORS_PER_PAGE = parseInt(process.env.SEARCH_MAX_ERRORS
  */
 export const SEARCH_PAGE_INTERVAL = parseInt(process.env.SEARCH_PAGE_INTERVAL) || 5 * 1000;
 
-/**
- * 每次会话最大处理页数
- * 程序运行一次最多处理多少页
- * 单位：页
- * 建议值：50-100 页
- * 作用：控制单次运行的工作量，便于管理
- */
-export const SEARCH_MAX_PAGES_PER_SESSION = parseInt(process.env.SEARCH_MAX_PAGES_PER_SESSION) || 50;
+// 移除页数限制配置，只保留大小限制
 
 // ============================================================================
 // 🌐 API 配置 - 请求限制和重试机制
@@ -467,8 +460,7 @@ export const CONFIG = {
     PAGE_SIZE: SEARCH_PAGE_SIZE,                 // 每页大小
     START_PAGE: SEARCH_START_PAGE,               // 起始页码
     MAX_ERRORS_PER_PAGE: SEARCH_MAX_ERRORS_PER_PAGE, // 每页最大错误次数
-    PAGE_INTERVAL: SEARCH_PAGE_INTERVAL,         // 翻页间隔
-    MAX_PAGES_PER_SESSION: SEARCH_MAX_PAGES_PER_SESSION // 每次会话最大页数
+    PAGE_INTERVAL: SEARCH_PAGE_INTERVAL          // 翻页间隔
   },
 
   /**
