@@ -129,6 +129,15 @@ api.interceptors.response.use(
           throw authError;
         }
 
+        // 特殊处理请求频率限制错误
+        if (errorMessage.includes("請求過於頻繁")) {
+          const rateLimitError = new Error(`请求过于频繁: ${errorMessage}`);
+          rateLimitError.name = "RateLimitError";
+          rateLimitError.code = 1;
+          rateLimitError.isRateLimitError = true;
+          throw rateLimitError;
+        }
+
         logger.error(`API Error (${response.data.code}): ${errorMessage}`);
         return Promise.reject(new Error(errorMessage));
       }

@@ -60,6 +60,11 @@ export class RetryManager {
       return false;
     }
     
+    // 请求频率限制错误不应该重试，直接失败
+    if (error.isRateLimitError || error.name === "RateLimitError" || (error.code === 1 && error.message.includes("請求過於頻繁"))) {
+      return false;
+    }
+    
     // 网络错误、超时、服务器错误等应该重试
     if (error.code === 'ECONNRESET' || 
         error.code === 'ETIMEDOUT' || 
